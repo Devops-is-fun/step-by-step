@@ -1,0 +1,95 @@
+# CI/CD tooling for school project — Jenkins, SonarQube, Nexus.
+
+# Story 001 — EXG-COM-01 requirement (one command) and EXG-COM-02 requirement (3 tools).
+#
+# Most important rule: no secret written in this file.
+# All secrets must live in Jenkins credentials (story 019).
+# Staging / production environments have their own files, in environments/
+# (stories 015 and 017).
+
+name: cicd
+
+services:
+  jenkins:
+    image: jenkins/jenkins:2.541.3-lts-jdk17
+    container_name: cicd-jenkins
+    ports:
+      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:50000:50000"
+    environment:
+      JAVA_OPTS: "-Xms512m -Xmx512m"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -fsS http://localhost:8080/login > /dev/null || exit 1" ]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+      start_period: 90s
+    restart: unless-stopped
+    networks:
+      - cicd
+  sonarqube:
+    image: sonarqube:9.9.8-community
+    container_name: cicd-sonarqube
+    ports:
+      - "127.0.0.1:9000:9000"
+    environment:
+      SONAR_WEB_JAVAOPTS: "-Xms512m -Xmx512m"
+      SONAR_SEARCH_JAVAOPTS: "-Xms512m -Xmx512m"
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_logs:/opt/sonarqube/logs
+      - sonarqube_extensions:/opt/sonarqube/extensions
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -q -O - http://localhost:9000/api/system/status | grep -q '\"status\":\"UP\"' || exit 1" ]
+      interval: 15s
+      timeout: 5s
+      retries: 40
+      start_period: 120s
+    restart: unless-stopped
+    networks:
+      - cicd
+  nexus:
+    image: sonatype/nexus3:3.96.4
+    container_name: cicd-nexus
+    ports:
+      - "127.0.0.1:8081:8081"
+    environment:
+      INSTALL4J_ADD_VM_PARAMS: "-Xms512m -Xmx512m -XX:MaxDirectMemorySize=256m"
+    volumes:
+      - nexus_data:/nexus-data
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -fsS http://localhost:8081/service/rest/v1/status > /dev/null || exit 1" ]
+      interval: 15s
+      timeout: 5s
+      retries: 40
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - cicd
+  jenkins-agent:
+    build: ./jenkins-agent
+    image: cicd-jenkins-agent:1.0.0
+    container_name: cicd-jenkins-agent
+    environment:
+      # PUBLIC key only (not a secret). Private key only exists in Jenkins credentials "docker-agent-ssh-key".
+      JENKINS_AGENT_SSH_PUBKEY: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOq1WWa9K2nlqA3+yNcBRgI+Hpa1Ew89UpfLa56/vPso docker-agent"
+    volumes:
+      - jenkins_agent_work:/home/jenkins/agent
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
+    networks:
+      - cicd
+
+networks:
+  cicd:
+    driver: bridge
+
+volumes:
+  jenkins_home:
+  sonarqube_data:
+  sonarqube_logs:
+  sonarqube_extensions:
+  nexus_data:
+  jenkins_agent_work:
