@@ -1,0 +1,43 @@
+# Jenkins credentials
+.env
+.env.*
+!.env.example
+volumes/
+jenkins_home/
+sonarqube_data/
+sonarqube_logs/
+sonarqube_extensions/
+nexus_data/
+
+# personnal files and IDE settings
+.idea/
+*.iml
+*.iws
+.vscode/
+.classpath
+.project
+.settings/
+
+# Java build
+target/
+*.class
+*.jar
+!*.jar.original
+
+# System
+.DS_Store
+Thumbs.db
+*~
+*.swp
+
+# local files
+notes-story-*.txt
+*.log
+
+# Keys and secrets (story 006)
+*.key
+*.pem
+id_rsa*
+id_ed25519*
+secrets/
+/data/
