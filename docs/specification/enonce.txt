@@ -1,0 +1,106 @@
+           RootIT Lab                               root@rootit-lab:~# docker compose up -d
+
+
+
+
+ Projet CI/CD avec Jenkins
+ ESGI Master — CI/CD avec Jenkins
+
+ Principe
+ Vous devez concevoir une chaîne CI/CD complète sous Jenkins pour une application
+ web de votre choix : chaque commit est construit, testé, analysé, empaqueté en un
+ artefact versionné, puis livré en staging et en production.
+
+
+ Partie commune (obligatoire)
+ • Outillage démarré en une commande (docker-compose.yml) : Jenkins, SonarQube
+    et un dépôt d'artefacts (Nexus) ; deux environnements staging et production
+    (machines virtuelles, serveurs ou plateforme d'hébergement) ; les builds
+    s'exécutent sur des agents, jamais sur le controller.
+ • Pipeline as Code : Jenkinsfile déclaratif dans le dépôt de l'application, job
+    Multibranch déclenché par webhook, statut du build remonté sur les pull requests.
+ • Intégration continue : lint, tests unitaires (rapport JUnit), tests d'intégration avec
+    Docker Compose, Quality Gate SonarQube bloquante, artefact versionné avec le
+    hash du commit et publié dans le dépôt d'artefacts.
+ • Livraison continue : déploiement par script idempotent, automatique en staging
+    depuis main, puis en production après validation manuelle (input avec submitter)
+    du même artefact.
+ • Shared Library versionnée par tag, utilisée pour les étapes communes.
+ • Secrets : uniquement dans les credentials Jenkins.
+
+
+ Les modules
+ Niveau 1
+ • Qualité et retour rapide : couverture de tests minimale imposée, rapports
+    publiés dans Jenkins, notification de chaque build (Slack, Discord ou e-mail) et
+    pipeline de moins de 10 minutes grâce au parallélisme et au cache.
+ • Releases automatisées : Conventional Commits, calcul automatique de la version
+    (semantic-release ou release-please), changelog généré, tag Git et artefact
+    versionné, notes de version publiées.
+
+ Niveau 2
+ • Déploiement progressif : stratégie blue/green (deux instances derrière un
+    reverse proxy) en production, avec vérification automatique de santé et retour
+    arrière automatique en cas d'échec.
+ • Environnements éphémères : un environnement par pull request (sous-domaine
+    dédié), URL publiée sur la PR, tests Playwright, suppression à la fermeture.
+
+
+
+
+RootIT Lab — rootit-lab.com                                                            Page 1
+           RootIT Lab                                 root@rootit-lab:~# docker compose up -d
+
+
+
+
+ Niveau 3
+ • Environnements as Code : staging et production décrits avec Terraform ou
+    OpenTofu et configurés avec Ansible ; le plan est publié sur la pull request et
+    appliqué par le pipeline après validation.
+ • Observabilité et DORA : Prometheus et Grafana ; les quatre métriques DORA
+    calculées automatiquement depuis Jenkins et Git, suivies sur la durée du projet.
+
+
+ Exigence minimale
+ • Trinôme : partie commune + 4 modules, dont au moins 1 de niveau 3.
+ • Quadrinôme : partie commune + 5 modules, dont les deux de niveau 3.
+ • Rendu : les dépôts Git, un README.md pour tout relancer et un rapport technique
+    (architecture, choix, métriques DORA).
+
+
+ Bonus (points supplémentaires)
+ • Feature flags (Unleash ou Flagsmith) pour activer une fonctionnalité sans
+    redéployer.
+ • Migrations de base de données en expand/contract (Flyway ou Liquibase) exécutées
+    par le pipeline, sans interruption de service.
+ • Tests de la Shared Library avec JenkinsPipelineUnit (non vu en cours).
+
+ Barème (/20)
+   Critère                                                                      Points
+
+   Partie commune (outillage, pipeline CI/CD, déploiement)                         6
+
+   Modules (fonctionnement et respect des consignes)                               6
+
+   Fiabilité du pipeline (reproductibilité, durée, taux de succès)                 2
+
+   Rapport technique et métriques DORA                                             3
+
+   Soutenance                                                                      3
+
+   Total                                                                          20
+
+
+ Soutenance
+ Démonstration en direct d'un commit jusqu'à la production, puis d'un échec volontaire
+ bloqué par le pipeline. Chaque membre devra ensuite modifier en direct une partie du
+ pipeline qu'il n'a pas écrite.
+ Chaque membre doit être capable d'expliquer l'intégralité de la chaîne rendue.
+ L'utilisation d'outils hors cours est autorisée, à condition de savoir les expliquer.
+
+
+
+
+RootIT Lab — rootit-lab.com                                                              Page 2
+
