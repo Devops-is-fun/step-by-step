@@ -18,6 +18,17 @@ description: Découpe une story CI/CD en tutoriels pas-à-pas TDA-friendly (infr
 | Exigence transverse | Les builds s'exécutent sur des **agents**, **jamais sur le controller** |
 | Secrets | **Uniquement** dans les credentials Jenkins. Jamais dans un fichier versionné |
 
+## Partage des rôles (à partir de la story 007)
+
+| Qui | Quoi |
+|-----|------|
+| L'utilisatrice | toutes les décisions (questions de cadrage) |
+| Claude | **implémente directement** le code applicatif (classes, tests, dépendances applicatives du `pom.xml`), le vérifie (`./mvnw -B verify`), puis le présente dans un tutoriel « 🤖 Claude a implémenté » (découvrir + vérifier) |
+| L'utilisatrice, guidée | tout ce qui touche à la CI/CD : réglages Sonar/JaCoCo du `pom.xml`, `Dockerfile`, scripts, Jenkins, Nexus — tutoriels « 🧑‍💻 Tu fais (guidée) » |
+| L'utilisatrice | les commits et les push (jamais faits par Claude) |
+
+Zone grise (plugin Maven de qualité, profil de build) : classée CI/CD par défaut, et signalée.
+
 ## Qu'est-ce que je fais
 
 Je prends une story de la chaîne CI/CD et je la découpe en **tutoriels** élémentaires.

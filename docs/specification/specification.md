@@ -219,7 +219,7 @@ S'y ajoute un **vocabulaire sans jargon** : les libellés sont des phrases court
 | Élément | Choix | Raison |
 |---------|-------|--------|
 | Langage | Java 17 LTS | Aligne le build sur l'image `jenkins/jenkins:lts-jdk17`, la plus répandue en cours ; le JDK local plus récent compile avec `<maven.compiler.release>17</maven.compiler.release>` |
-| Framework | Spring Boot 3.x | Conteneur `spring-boot-maven-plugin` = artifact exécutable |
+| Framework | Spring Boot 4.1 (4.1.2 au démarrage) | Version maintenue (la 3.5 n'a plus de support gratuit depuis 06/2026) ; `spring-boot-maven-plugin` = artifact exécutable |
 | Build | Maven (`./mvnw`) | Wrapper versionné → build reproductible sur l'agent comme en local |
 | Tests | JUnit 5 + AssertJ + Mockito, `maven-failsafe-plugin` pour l'intégration | Rapports JUnit exigés par `EXG-COM-09` |
 | Couverture | JaCoCo + `jacoco-maven-plugin` | Seuil minimal imposé par `EXG-N1a-01` |
@@ -246,6 +246,7 @@ S'y ajoute un **vocabulaire sans jargon** : les libellés sont des phrases court
 | SonarQube | analyse qualité + Quality Gate | `localhost:9000` |
 | Nexus | dépôt Maven `maven-releases` | `localhost:8081` |
 | PostgreSQL staging | base de l'environnement staging | interne au stack staging |
+| Application (poste de dev) | `java -jar … --server.port=8090` ou conteneur de test | `localhost:8090` |
 | Application staging | version candidate | `localhost:8082` |
 | Reverse proxy (nginx) | aiguillage blue/green en production | `localhost:8088` |
 | Application prod **blue** | instance stable actuelle | `localhost:8083` |
@@ -441,6 +442,16 @@ Contrôle systématique : la section `git status` avant chaque commit fait parti
   (`.githooks/pre-commit` → `scripts/check-no-secrets.sh`, formes connues + affectations hors
   Markdown) (`1a`-`5a`, `tasks-fr 006`) · Raison : le vigile n'oublie jamais ; le dépôt privé limite
   l'exposition d'un oubli · Date : 26/10/2026
+- **Décision :** squelette applicatif → **Spring Boot 4.1.2**, Java 17 (`maven.compiler.release`),
+  Maven 3.9.16 par le wrapper `only-script`, image multi-étapes `eclipse-temurin:17.0.20.1_1`
+  (`jdk-noble` + `./mvnw` → `jre-noble`, utilisateur non-root), scanner `sonar-maven-plugin`
+  5.8.0.7211 épinglé en `pluginManagement`, port local 8090 (`1a`-`5a`, `tasks-fr 007`) · Raison :
+  version maintenue ; un seul chemin de build (poste, agent, image) ; scanner vérifié avec SonarQube
+  9.9.8 et un JDK 25 · Date : 26/10/2026
+- **Décision :** partage des rôles à partir de la story 007 → Claude écrit le **code applicatif**
+  (classes, tests, dépendances) ; l'étudiante **décide**, écrit **tout ce qui touche à la CI/CD**
+  (Sonar, Docker, scripts, Jenkins, Nexus) et fait les commits · Raison : l'objectif du TP est la
+  chaîne CI/CD, l'application en est le support · Date : 26/10/2026
 
 ### Modules bonus
 
