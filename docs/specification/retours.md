@@ -32,3 +32,8 @@
 ## 2026-10-26 — Erreurs dans les tutoriels de la story 006
 
 * `task-004` ét. 4 : `git restore --staged trap.properties` échoue avec `fatal : impossible de résoudre 'HEAD'`, car il n'y a encore aucun commit. Le piège reste dans l'index (`AD trap.properties`, compteur à `1`). La simulation avait retiré le piège autrement. Corrigé : `git rm --cached` [TRAITE: story-006 task-004 + task-006 + tasks-fr]
+
+## 2026-10-26 — Erreurs dans les tutoriels de la story 007
+
+* `task-004` ét. 1 : `./scripts/check-sonarqube.sh` lancé **avant** le chargement du jeton → `SONAR_TOKEN is not set`. Le script exige `SONAR_TOKEN` (story 003). Corrigé : les étapes 1 et 2 sont inversées (jeton d'abord) [TRAITE: story-007 task-004]
+* `task-006` ét. 4 : la boucle `until curl …; do sleep 2; done` tourne sans fin quand rien n'écoute sur 8090 (ici, aucun conteneur `step-by-step-local`) ; il a fallu Ctrl+C. Corrigé : `docker ps` d'abord, boucle bornée par `timeout 60`, ligne « Si tu es bloqué » précisée [TRAITE: story-007 task-006]
