@@ -9,7 +9,8 @@ triggered by a GitHub webhook.
 
 - Docker 29.x and Docker Compose v2 (`docker compose`)
 - 8 GB of RAM available for Docker
-- Java 17 and Maven 3.9
+- A JDK 17 or newer (the code is compiled for Java 17)
+- Maven is **not** required: the `./mvnw` wrapper downloads the right version
 
 ## Tooling
 
@@ -38,6 +39,23 @@ docker compose down -v                       # to delete everything, INCLUDING D
 ```
 
 Never run `down -v` without checking twice: volumes contain Jenkins configuration, SonarQube analysis results, and Nexus artifacts.
+
+## Run the application locally
+
+```bash
+./mvnw -B verify                                                    # compile, test, package
+java -jar target/step-by-step-0.1.0-SNAPSHOT.jar --server.port=8090
+curl localhost:8090/actuator/health                                 # {"status":"UP", …}
+```
+
+Or as a container:
+
+```bash
+docker build -t step-by-step:0.1.0-SNAPSHOT .
+docker run -d --name step-by-step-local -p 127.0.0.1:8090:8080 step-by-step:0.1.0-SNAPSHOT
+```
+
+Port **8090** avoids clashing with Jenkins (8080) and Nexus (8081).
 
 ## What's next
 

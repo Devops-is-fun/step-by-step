@@ -1,0 +1,8 @@
+# Keep the Docker build context small and free of local files (story 007)
+target/
+.git/
+.idea/
+*.iml
+docs/
+.env
+.env.*

@@ -9,7 +9,8 @@ déclenchés par un webhook GitHub.
 
 - Docker 29.x avec Docker Compose v2 (`docker compose`)
 - 8 Go de RAM disponibles pour Docker
-- Java 17 et Maven 3.9 (stories 008 et 011)
+- Un JDK 17 ou plus récent (le code est compilé en Java 17)
+- Maven n'est **pas** nécessaire : le wrapper `./mvnw` télécharge la bonne version
 
 ## Démarrage de l'outillage
 
@@ -39,6 +40,23 @@ docker compose down -v                       # tout supprimer, DONNÉES INCLUES
 
 Ne lancez jamais `down -v` sans vérifier deux fois : les volumes contiennent la configuration de
 Jenkins, les analyses SonarQube et les dépôts Nexus.
+
+## Lancer l'application en local
+
+```bash
+./mvnw -B verify                                                    # compiler, tester, emballer
+java -jar target/step-by-step-0.1.0-SNAPSHOT.jar --server.port=8090
+curl localhost:8090/actuator/health                                 # {"status":"UP", …}
+```
+
+Ou en conteneur :
+
+```bash
+docker build -t step-by-step:0.1.0-SNAPSHOT .
+docker run -d --name step-by-step-local -p 127.0.0.1:8090:8080 step-by-step:0.1.0-SNAPSHOT
+```
+
+Le port **8090** évite le conflit avec Jenkins (8080) et Nexus (8081).
 
 ## Suite du projet
 
