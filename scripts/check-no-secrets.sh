@@ -23,10 +23,10 @@ if scan -E -e "$FORMATS"; then
   found=1
 fi
 
-# 2. A long value assigned to a secret-like name, in configuration and code
-#    (Markdown excluded: its prose explains secrets without containing any)
+#    (Markdown excluded: its prose explains secrets without containing any;
+#     mvnw excluded: Maven's own script, "${MVNW_PASSWORD:+...}" is bash syntax, not a value)
 ASSIGN='(password|passwd|secret|token|api[_-]?key)[[:space:]]*[:=][[:space:]]*[^<{$?[:space:]]{8,}'
-if scan -iE -e "$ASSIGN" -- . ':(exclude)*.md'; then
+if scan -iE -e "$ASSIGN" -- . ':(exclude)*.md' ':(exclude)mvnw'; then
   found=1
 fi
 
