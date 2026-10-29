@@ -1,0 +1,7 @@
+# Integration tests (profile "test"): PostgreSQL started by src/test/resources/compose-test.yml.
+# Test-only credentials, local to the throwaway test database.
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5433/stepbystep_test
+    username: stepbystep
+    password: test

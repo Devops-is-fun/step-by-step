@@ -1,0 +1,20 @@
+# Throwaway PostgreSQL for the integration tests (story 008).
+# Test-only credentials: this database holds no real data and lives only during the tests.
+name: stepbystep-test
+
+services:
+  postgres:
+    image: postgres:16.15-alpine3.24
+    environment:
+      POSTGRES_DB: stepbystep_test
+      POSTGRES_USER: stepbystep
+      POSTGRES_PASSWORD: test
+    ports:
+      - "127.0.0.1:5433:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U stepbystep -d stepbystep_test"]
+      interval: 5s
+      timeout: 3s
+      retries: 10

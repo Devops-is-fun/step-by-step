@@ -1,6 +1,12 @@
 spring:
   application:
     name: step-by-step
+  # The datasource comes from the environment of each stack (SPRING_DATASOURCE_URL, _USERNAME, _PASSWORD)
+  jpa:
+    # Flyway owns the schema (src/main/resources/db/migration); Hibernate only checks it matches the entities
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
 
 management:
   endpoints:
