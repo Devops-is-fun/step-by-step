@@ -103,6 +103,27 @@ class TaskRepositoryIT {
     }
 
     @Test
+    void findsOnlyUnfinishedTasksWhenCheckingADay() {
+        LocalDate day = LocalDate.of(2026, 11, 4);
+        Task done = new Task("Call the bank", 10);
+        done.setPlannedFor(day);
+        done.setStatus(TaskStatus.DONE);
+        Long doneId = tasks.save(done).getId();
+        entityManager.flush();
+
+        assertThat(tasks.existsByPlannedForAndStatusNot(day, TaskStatus.DONE)).isFalse();
+
+        Task open = new Task("Book the dentist", 10);
+        open.setPlannedFor(day);
+        Long openId = tasks.save(open).getId();
+        entityManager.flush();
+
+        assertThat(tasks.existsByPlannedForAndStatusNot(day, TaskStatus.DONE)).isTrue();
+        assertThat(tasks.existsByPlannedForAndStatusNotAndIdNot(day, TaskStatus.DONE, openId)).isFalse();
+        assertThat(tasks.existsByPlannedForAndStatusNotAndIdNot(day, TaskStatus.DONE, doneId)).isTrue();
+    }
+
+    @Test
     void keepsTheNotificationsOfATask() {
         Task task = tasks.save(new Task("Water the plants", 5));
         notifications.save(new NotificationLog(task, NotificationChannel.DISCORD, Instant.parse("2026-11-02T08:00:00Z"), true));
