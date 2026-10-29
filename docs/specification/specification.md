@@ -459,6 +459,10 @@ Contrôle systématique : la section `git status` avant chaque commit fait parti
   Failsafe `*IT` avec base, datasource fournie par l'environnement (`SPRING_DATASOURCE_*`)
   (`1a`-`5a`, `tasks-fr 008`) · Raison : staging et prod auront le même schéma que les tests ; les
   tests unitaires restent exécutables sans Docker · Date : 29/10/2026
+- **Décision :** règles métier → `REG-01` et `REG-02` dans `TaskService` (story 009), `REG-02`
+  vérifiée par requête avant enregistrement (l'index unique reste le filet), messages utilisateur en
+  français, code en anglais (`1a`-`5a`, `tasks-fr 009`) · Raison : testable avec Mockito sans base ;
+  `REG-03` à `REG-07` restent en story 028 · Date : 29/10/2026
 
 ### Modules bonus
 

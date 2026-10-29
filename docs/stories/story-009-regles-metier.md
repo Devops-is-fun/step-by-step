@@ -40,13 +40,16 @@ Tests : `TaskServiceTest#shouldRejectStepLongerThan30Minutes`,
 
 ## Documentation
 
-`docs/architecture/regles-metier.md` : règle, point d'application, test associé.
+`docs/architecture/business-rules.md` (en anglais) : règle, point d'application, test associé.
 
 ## Fichiers à versionner
 
 - `src/main/java/com/esgi/stepbystep/service/TaskService.java`
 - `src/main/java/com/esgi/stepbystep/service/exception/StepTooLongException.java`
 - `src/main/java/com/esgi/stepbystep/service/exception/AlreadyPlannedException.java`
+- `src/main/java/com/esgi/stepbystep/service/exception/StepTooShortException.java`, `BusinessRuleException.java`, `TaskNotFoundException.java`
+- `src/main/java/com/esgi/stepbystep/domain/TaskRepository.java` (requêtes `REG-02`)
+- `docs/architecture/business-rules.md`
 - `src/test/java/com/esgi/stepbystep/service/TaskServiceTest.java`
 
 ## Fichiers à ne jamais versionner
@@ -67,6 +70,18 @@ rien de spécifique
 - [ ] 4 tests unitaires (2 positifs, 2 négatifs) verts
 - [ ] Tests exécutables sans Docker ni base
 
+## Décisions (`tasks-fr 009`, 29/10/2026)
+
+| Sujet | Décision |
+|-------|----------|
+| Périmètre | `REG-01` et `REG-02` seulement (`1a`) |
+| `REG-02` | requêtes `existsByPlannedForAndStatusNot…` avant enregistrement, index unique en filet (`2a`) ; requêtes prouvées par `TaskRepositoryIT` |
+| Messages | français pour l'utilisateur, code en anglais (`3a`) |
+| Doc | `docs/architecture/business-rules.md`, en anglais, par Claude (`4a`) |
+| Partie de l'étudiante | lecture du rapport JUnit et de l'analyse SonarQube (`5a`) |
+| Constat SonarQube | Quality Gate **rouge** sur *Coverage on New Code* (0 %) : pas encore de JaCoCo (story 021) ; 0 bug, 0 vulnérabilité, 0 code smell |
+
 ## Message de commit
 
-`feat(app): enforce step duration and one task per day business rules`
+1. `feat(app): enforce step duration and one task per day business rules`
+2. `docs(app): add story 009 tutorials and record business rule decisions`
