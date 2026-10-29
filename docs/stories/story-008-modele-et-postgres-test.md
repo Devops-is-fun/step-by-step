@@ -35,15 +35,17 @@ réelle à interroger (`EXG-COM-10`).
 
 ## Documentation
 
-`docs/architecture/modele-de-donnees.md` : diagramme des 3 entités.
+`docs/architecture/data-model.md` (en anglais) : diagramme Mermaid des 3 entités et tableau des contraintes.
 
 ## Fichiers à versionner
 
 - `src/main/java/com/esgi/stepbystep/domain/` (entités, repositories)
+- `src/main/resources/db/migration/V1__create_task_model.sql`
 - `src/main/resources/application.yml`, `src/test/resources/application-test.yml`
 - `src/test/resources/compose-test.yml`
-- `src/test/java/com/esgi/stepbystep/**/*IT.java`
-- `docs/architecture/modele-de-donnees.md`
+- `src/test/java/com/esgi/stepbystep/**/*IT.java`, `src/test/java/com/esgi/stepbystep/**/*Test.java`
+- `pom.xml` (dépendances JPA/Flyway/PostgreSQL, plugin Failsafe)
+- `docs/architecture/data-model.md`
 
 ## Fichiers à ne jamais versionner
 
@@ -64,6 +66,19 @@ réelle à interroger (`EXG-COM-10`).
 - [ ] Test Failsafe d'intégration vert
 - [ ] Surefire seul passe sans Docker
 
+## Décisions (`tasks-fr 008`, 29/10/2026)
+
+| Sujet | Décision |
+|-------|----------|
+| Schéma | Flyway dès cette story (`V1__create_task_model.sql`), Hibernate en `ddl-auto=validate` (`1a`) |
+| `compose-test.yml` | écrit par l'étudiante (`2a`) : `postgres:16.15-alpine3.24`, `name: stepbystep-test`, `tmpfs`, healthcheck `pg_isready` |
+| Failsafe | branché par l'étudiante (`3a`) ; Surefire = `*Test`, Failsafe = `*IT` |
+| Port | 5432 dans le conteneur, `127.0.0.1:5433` sur le poste (`4a`) ; accès depuis l'agent Jenkins → story 012 |
+| Doc | `docs/architecture/data-model.md`, en anglais, par Claude (`5a`) |
+| Datasource | fournie par l'environnement (`SPRING_DATASOURCE_*`) ; l'application ne démarre plus sans base |
+| Test de démarrage | `StepByStepApplicationTests` devient `StepByStepApplicationIT` (il a besoin de la base) |
+
 ## Message de commit
 
-`feat(app): add task domain model and postgres test stack`
+1. `feat(app): add task domain model and postgres test stack`
+2. `docs(app): add story 008 tutorials and record data model decisions`

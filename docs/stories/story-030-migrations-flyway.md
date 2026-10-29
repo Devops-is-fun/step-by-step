@@ -17,7 +17,8 @@ utilisée par une application déployée.
 
 ## Critères d'acceptation
 
-- Flyway est activé ; les scripts de migration sont versionnés sous `src/main/resources/db/migration/`.
+- Flyway est activé (déjà fait en story 008 : `V1__create_task_model.sql`) ; les scripts de migration
+  sont versionnés sous `src/main/resources/db/migration/`.
 - Une migration **expand** est démontrée : ajout d'une colonne nouvelle **nullable** (ou nouvelle
   colonne avec valeur par défaut), compatible avec l'ancienne version de l'application.
 - La migration **contract** (suppression de la colonne ou renommage) n'est appliquée qu'**après** que

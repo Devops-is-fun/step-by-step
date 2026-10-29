@@ -69,7 +69,7 @@ de `src/`) ; puis `OK  no secret found…` et `12 files changed`.
 **Action :**
 
 > ```bash
-> git add docs/tasks/story-007 docs/stories/story-007-squelette-spring-boot.md docs/specification/specification.md .opencode/skills
+> git add docs/tasks/story-007 docs/stories/story-007-squelette-spring-boot.md docs/specification .opencode/skills
 > git status --short | grep '^[AM]'
 > git commit -m "docs(app): add story 007 tutorials and record spring boot decisions"
 > ```

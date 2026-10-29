@@ -245,6 +245,7 @@ S'y ajoute un **vocabulaire sans jargon** : les libellés sont des phrases court
 | Jenkins agent | exécution des builds (`Built-In Node` à 0 exécuteur) | interne |
 | SonarQube | analyse qualité + Quality Gate | `localhost:9000` |
 | Nexus | dépôt Maven `maven-releases` | `localhost:8081` |
+| PostgreSQL de test | base jetable des tests d'intégration (`compose-test.yml`, projet `stepbystep-test`) | `localhost:5433` |
 | PostgreSQL staging | base de l'environnement staging | interne au stack staging |
 | Application (poste de dev) | `java -jar … --server.port=8090` ou conteneur de test | `localhost:8090` |
 | Application staging | version candidate | `localhost:8082` |
@@ -452,6 +453,12 @@ Contrôle systématique : la section `git status` avant chaque commit fait parti
   (classes, tests, dépendances) ; l'étudiante **décide**, écrit **tout ce qui touche à la CI/CD**
   (Sonar, Docker, scripts, Jenkins, Nexus) et fait les commits · Raison : l'objectif du TP est la
   chaîne CI/CD, l'application en est le support · Date : 26/10/2026
+- **Décision :** modèle de données et base de test → schéma par **Flyway** dès la story 008
+  (`V1__create_task_model.sql`, Hibernate en `validate`), base de test `postgres:16.15-alpine3.24`
+  jetable (`tmpfs`, projet Compose `stepbystep-test`, `127.0.0.1:5433`), Surefire `*Test` sans base /
+  Failsafe `*IT` avec base, datasource fournie par l'environnement (`SPRING_DATASOURCE_*`)
+  (`1a`-`5a`, `tasks-fr 008`) · Raison : staging et prod auront le même schéma que les tests ; les
+  tests unitaires restent exécutables sans Docker · Date : 29/10/2026
 
 ### Modules bonus
 

@@ -37,3 +37,8 @@
 
 * `task-004` ét. 1 : `./scripts/check-sonarqube.sh` lancé **avant** le chargement du jeton → `SONAR_TOKEN is not set`. Le script exige `SONAR_TOKEN` (story 003). Corrigé : les étapes 1 et 2 sont inversées (jeton d'abord) [TRAITE: story-007 task-004]
 * `task-006` ét. 4 : la boucle `until curl …; do sleep 2; done` tourne sans fin quand rien n'écoute sur 8090 (ici, aucun conteneur `step-by-step-local`) ; il a fallu Ctrl+C. Corrigé : `docker ps` d'abord, boucle bornée par `timeout 60`, ligne « Si tu es bloqué » précisée [TRAITE: story-007 task-006]
+
+## 2026-10-29 — Erreurs dans les tutoriels de la story 008
+
+* `task-005` ét. 2 : l'ordre annoncé des classes Failsafe (`StepByStepApplicationIT` puis `TaskRepositoryIT`) n'est pas garanti, et les `WARNING` Mockito/JDK 25 s'intercalent. Précisé dans le tutoriel [TRAITE: story-008 task-005]
+* `task-006` ét. 5 : `Conflict. The container name "/step-by-step-local" is already in use` : un `docker run` antérieur, en échec, avait laissé un conteneur à l'état `Created`. Cas ajouté à « Si tu es bloqué » [TRAITE: story-008 task-006]
