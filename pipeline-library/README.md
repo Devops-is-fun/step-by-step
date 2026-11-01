@@ -4,7 +4,7 @@ Common pipeline steps of Step by Step, **versioned by Git tag** (`lib-v<major>.<
 The `Jenkinsfile` pins the version it uses:
 
 ```groovy
-@Library('step-by-step-lib@lib-v1.0.0') _
+@Library('step-by-step-lib@lib-v1.1.0') _
 ```
 
 ## Jenkins configuration
@@ -31,6 +31,13 @@ fine-grained GitHub token is enough. Its versions are independent from the appli
 | `deployStaging(version)` | `scripts/deploy-staging.sh` | `staging-db-creds` |
 | `deployProduction(version)` | `scripts/deploy-production.sh` (blue/green, automatic rollback) | `production-db-creds` |
 | `notifyDiscord(version)` | posts the build result on Discord | `discord-webhook` |
+
+## Versions
+
+| Tag | Change |
+|-----|--------|
+| `lib-v1.0.0` | first version: integration tests, Nexus publication, deployments, Discord |
+| `lib-v1.1.0` | `publishToNexus` finds the jar whatever the `pom.xml` version (release-please bumps it) |
 
 ## Releasing a new version
 
