@@ -1,74 +1,82 @@
 # Step by Step
 
-[🇫🇷 Version française](README.md)
+[🇫🇷 Version française](README.md) — the French README is the reference; this page summarises it.
 
-This project is a full CI/CD pipeline using Jenkins, SonarQube and Nexus,
-triggered by a GitHub webhook.
+Step by Step is a Java 17 / Spring Boot task manager exposed through a JSON REST API. The repository
+demonstrates a complete Jenkins CI/CD chain: GitHub webhook, CI (lint, unit and integration tests,
+SonarQube quality gate), versioned artefact in Nexus, automatic staging, manual approval, then
+blue/green production. Prometheus, Grafana and the DORA metrics follow the deliveries.
 
-## Prerequisites
+**Team:** Géraldine and Morgan.
 
-- Docker 29.x and Docker Compose v2 (`docker compose`)
-- 8 GB of RAM available for Docker
-- A JDK 17 or newer (the code is compiled for Java 17)
-- Maven is **not** required: the `./mvnw` wrapper downloads the right version
+## 1. Prerequisites
 
-## Tooling
+- Docker Engine 29.x with Docker Compose v2, at least 8 GB of RAM for Docker
+- A JDK 17 or newer; Maven is not required (`./mvnw`)
+- Git and access to the private GitHub repository
+- A smee.io channel, a webhook secret and a fine-grained GitHub token limited to the repository,
+  kept in a password manager, never in Git
 
-The CI/CD tools start with a **single command**:
-
-```bash
-docker compose up -d
-```
-
-| Tool      | URL                     | Access       |
-|------------|-------------------------|--------------|
-| Jenkins    | http://localhost:8080   | initial password: `docker compose exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword` |
-| SonarQube  | http://localhost:9000   | admin / admin (change it) |
-| Nexus      | http://localhost:8081   | admin / temporary password in `/nexus-data/admin.password`; command `docker compose exec nexus cat /nexus-data/admin.password` |
-
-Ports only listen on `127.0.0.1`: they are not accessible from the outside.
-
-### Useful commands
+## 2. Start
 
 ```bash
-docker compose ps                            # services state and health
-docker compose logs -f sonarqube             # to follow logs
-docker compose stop                          # to stop, keep data
-docker compose down                          # to stop and delete containers
-docker compose down -v                       # to delete everything, INCLUDING DATA
+docker compose up -d --build        # Jenkins, agent, SonarQube, Nexus, Prometheus, Grafana, DORA exporter
+read -rs SMEE_URL && export SMEE_URL
+docker run -d --name cicd-webhook-relay --restart unless-stopped --network cicd_cicd \
+  node:22.23.4-alpine3.24 \
+  npx --yes smee-client@5.0.0 --url "$SMEE_URL" --target 'http://jenkins:8080/github-webhook/?source=smee'
 ```
 
-Never run `down -v` without checking twice: volumes contain Jenkins configuration, SonarQube analysis results, and Nexus artifacts.
+## 3. One-time configuration
 
-## Run the application locally
+1. **Jenkins** (`http://localhost:8080`): unlock, plugins of `docs/tooling/jenkins-configuration.md`,
+   controller with **0 executor**, SSH agent `docker-agent` with 2 executors; System: SonarQube server
+   `sonarqube` (`http://sonarqube:9000`, token `sonar-token`), quiet period `0`, GitHub shared secret
+   `github-webhook-secret`, trusted library `step-by-step-lib` (`pipeline-library/README.md`);
+   Multibranch job `step-by-step` with `github-token`.
+2. **SonarQube** (`http://localhost:9000`): project `step-by-step`, gate `step-by-step-gate` (new code
+   coverage ≥ 60 %), webhook `http://jenkins:8080/sonarqube-webhook/`.
+3. **Nexus** (`http://localhost:8081`): anonymous read, `maven-releases` with redeploy disabled,
+   account `nexus-deployer`.
+4. **Jenkins credentials:** `docker-agent-ssh-key`, `github-token`, `github-webhook-secret`,
+   `sonar-token`, `nexus-deploy-creds`, `discord-webhook`, `staging-db-creds`, `production-db-creds`.
+5. **GitHub:** webhook to the smee URL (`application/json`, secret, *Pushes* and *Pull requests*);
+   Actions → Workflow permissions → *Read and write* + *Allow GitHub Actions to create and approve pull
+   requests* (release-please).
 
-The application needs a PostgreSQL database. Locally, use the throwaway **test** database
-(test-only credentials `stepbystep` / `test`, no real data):
+Checks: `scripts/check-jenkins.sh`, `check-agents.sh`, `check-sonarqube.sh`, `check-nexus.sh`,
+`check-webhook.sh`, `check-no-secrets.sh`, `check-dora.sh`, `check-readme.sh`.
+
+## 4. Ports (all on 127.0.0.1)
+
+| Port | Service |
+|------|---------|
+| 8080 | Jenkins |
+| 9000 | SonarQube |
+| 8081 | Nexus |
+| 8082 | Staging |
+| 8088 | Production (nginx, blue 8083 / green 8084) |
+| 9090 | Prometheus |
+| 3000 | Grafana (anonymous read) |
+
+## 5. Use the chain
+
+Branch → push → pull request (Jenkins status `pr-merge` ✅) → **Squash and merge** → build of `main`:
+Nexus publication, staging, approval by `admin`, blue/green production with automatic rollback.
 
 ```bash
-docker compose -f src/test/resources/compose-test.yml up -d --wait   # test database, port 5433
-./mvnw -B verify                                                      # compile, unit and integration tests, package
-SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5433/stepbystep_test \
-SPRING_DATASOURCE_USERNAME=stepbystep SPRING_DATASOURCE_PASSWORD=test \
-java -jar target/step-by-step-0.1.0-SNAPSHOT.jar --server.port=8090
-curl localhost:8090/actuator/health                                   # {"status":"UP", …}
+curl http://localhost:8082/actuator/health     # staging
+curl http://localhost:8088/api/tasks           # production API, see docs/architecture/api.md
 ```
 
-Or as a container, attached to the test database network:
+DORA metrics: `bash scripts/dora-metrics.sh` (with `JENKINS_USER` / `JENKINS_TOKEN` loaded by `read -rs`),
+then the Grafana dashboard "Step by Step - DORA".
 
-```bash
-docker build -t step-by-step:0.1.0-SNAPSHOT .
-docker run -d --name step-by-step-local --network stepbystep-test_default -p 127.0.0.1:8090:8080 \
-  -e SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/stepbystep_test \
-  -e SPRING_DATASOURCE_USERNAME=stepbystep -e SPRING_DATASOURCE_PASSWORD=test \
-  step-by-step:0.1.0-SNAPSHOT
-```
+## 6. Documentation
 
-Unit tests only, **without Docker**: `./mvnw -B test`.
-Stop the test database: `docker compose -f src/test/resources/compose-test.yml down`.
+[Technical report](docs/rapport-technique/rapport.md) · [Demo script](docs/rapport-technique/demo.md) ·
+[Environments](docs/architecture/environments.md) · [REST API](docs/architecture/api.md) ·
+[DORA](docs/observability/dora.md) · [Webhook relay](docs/tooling/webhook-relay.md) ·
+[Contributing](CONTRIBUTING.md)
 
-Port **8090** avoids clashing with Jenkins (8080) and Nexus (8081).
-
-## What's next
-
-This README will be updated with future stories.
+Never run `docker compose down -v`: it deletes the Jenkins, SonarQube, Nexus and Grafana data.
