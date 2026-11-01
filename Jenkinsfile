@@ -4,9 +4,10 @@
 // Common steps come from the Shared Library step-by-step-lib (pipeline-library/), pinned by tag (story 020).
 // Every stage runs on the docker-agent node, never on the controller.
 
-@Library('step-by-step-lib@lib-v1.1.1') _
+@Library('step-by-step-lib@lib-v1.2.0') _
 
 def APP_VERSION = ''
+def JAR_FILE = ''
 
 pipeline {
     agent { label 'docker-agent' }
@@ -28,10 +29,13 @@ pipeline {
                 script {
                     // Artefact version = version of pom.xml (set by release-please, module N1b) + short commit hash
                     // (EXG-COM-12), for example 0.2.0-1a2b3c4
+                    // Fresh target/: a jar left by a previous build (older pom version) can never be published
+                    sh "${MVN} -q clean"
                     def pomVersion = sh(script: "${MVN} -q help:evaluate -Dexpression=project.version -DforceStdout",
-                                        returnStdout: true).trim().replace('-SNAPSHOT', '')
+                                        returnStdout: true).trim()
                     def shortSha = sh(script: 'git rev-parse --short=7 HEAD', returnStdout: true).trim()
-                    APP_VERSION = "${pomVersion}-${shortSha}"
+                    APP_VERSION = "${pomVersion.replace('-SNAPSHOT', '')}-${shortSha}"
+                    JAR_FILE = "target/step-by-step-${pomVersion}.jar"
                     currentBuild.displayName = "#${env.BUILD_NUMBER} ${APP_VERSION}"
                 }
                 echo "Artefact version: ${APP_VERSION}"
@@ -96,7 +100,7 @@ pipeline {
         stage('Publish') {
             when { branch 'main' }
             steps {
-                publishToNexus(APP_VERSION)
+                publishToNexus(APP_VERSION, JAR_FILE)
                 archiveArtifacts artifacts: 'target/step-by-step-*.jar', fingerprint: true
             }
         }
