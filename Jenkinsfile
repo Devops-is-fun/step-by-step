@@ -114,13 +114,28 @@ pipeline {
                         // Releases are immutable in Nexus: a replayed build reuses the published artefact
                         echo "Artefact ${APP_VERSION} already in Nexus, not republished"
                     } else {
-                        withCredentials([usernamePassword(credentialsId: 'nexus-deploy-creds',
-                                                          usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASSWORD')]) {
-                            sh """${MVN} -s ci/maven-settings.xml deploy:deploy-file \
-                                -Dfile=target/step-by-step-0.1.0-SNAPSHOT.jar \
-                                -DgroupId=com.esgi -DartifactId=step-by-step -Dversion=${APP_VERSION} \
-                                -Dpackaging=jar -DgeneratePom=true \
-                                -DrepositoryId=nexus -Durl=${NEXUS_URL}/repository/${NEXUS_REPOSITORY}/"""
+                        // Same upload as the witness of story 004: a plain HTTP PUT of the jar and its pom
+                        withEnv(["APP_VERSION=${APP_VERSION}"]) {
+                            withCredentials([usernamePassword(credentialsId: 'nexus-deploy-creds',
+                                                              usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASSWORD')]) {
+                                sh '''
+                                    set -eu
+                                    base="$NEXUS_URL/repository/$NEXUS_REPOSITORY/com/esgi/step-by-step/$APP_VERSION"
+                                    cat > target/publish.pom <<POM
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.esgi</groupId>
+  <artifactId>step-by-step</artifactId>
+  <version>$APP_VERSION</version>
+  <packaging>jar</packaging>
+</project>
+POM
+                                    curl -fsS -u "$NEXUS_USER:$NEXUS_PASSWORD" --upload-file target/step-by-step-0.1.0-SNAPSHOT.jar "$base/step-by-step-$APP_VERSION.jar"
+                                    curl -fsS -u "$NEXUS_USER:$NEXUS_PASSWORD" --upload-file target/publish.pom "$base/step-by-step-$APP_VERSION.pom"
+                                    echo "Published $base/step-by-step-$APP_VERSION.jar"
+                                '''
+                            }
                         }
                     }
                 }
