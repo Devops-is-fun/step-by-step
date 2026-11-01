@@ -24,7 +24,9 @@ def call(String version, String repository = 'maven-releases') {
   <packaging>jar</packaging>
 </project>
 POM
-                curl -fsS -u "$NEXUS_USER:$NEXUS_PASSWORD" --upload-file target/step-by-step-0.1.0-SNAPSHOT.jar "$NEXUS_BASE/step-by-step-$APP_VERSION.jar"
+                # The jar keeps the name given by Maven (step-by-step-<pom version>.jar); Nexus gets the build version
+                jar="$(ls target/step-by-step-*.jar | head -1)"
+                curl -fsS -u "$NEXUS_USER:$NEXUS_PASSWORD" --upload-file "$jar" "$NEXUS_BASE/step-by-step-$APP_VERSION.jar"
                 curl -fsS -u "$NEXUS_USER:$NEXUS_PASSWORD" --upload-file target/publish.pom "$NEXUS_BASE/step-by-step-$APP_VERSION.pom"
                 echo "Published $NEXUS_BASE/step-by-step-$APP_VERSION.jar"
             '''

@@ -4,7 +4,7 @@
 // Common steps come from the Shared Library step-by-step-lib (pipeline-library/), pinned by tag (story 020).
 // Every stage runs on the docker-agent node, never on the controller.
 
-@Library('step-by-step-lib@lib-v1.0.0') _
+@Library('step-by-step-lib@lib-v1.1.1') _
 
 def APP_VERSION = ''
 
@@ -26,9 +26,12 @@ pipeline {
         stage('Version') {
             steps {
                 script {
-                    // Artefact version = semantic version + short commit hash (EXG-COM-12)
+                    // Artefact version = version of pom.xml (set by release-please, module N1b) + short commit hash
+                    // (EXG-COM-12), for example 0.2.0-1a2b3c4
+                    def pomVersion = sh(script: "${MVN} -q help:evaluate -Dexpression=project.version -DforceStdout",
+                                        returnStdout: true).trim().replace('-SNAPSHOT', '')
                     def shortSha = sh(script: 'git rev-parse --short=7 HEAD', returnStdout: true).trim()
-                    APP_VERSION = "0.1.0-${shortSha}"
+                    APP_VERSION = "${pomVersion}-${shortSha}"
                     currentBuild.displayName = "#${env.BUILD_NUMBER} ${APP_VERSION}"
                 }
                 echo "Artefact version: ${APP_VERSION}"
