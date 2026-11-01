@@ -83,6 +83,39 @@ services:
     restart: unless-stopped
     networks:
       - cicd
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    container_name: step-by-step-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    restart: unless-stopped
+  grafana:
+    image: grafana/grafana:12.1.0
+    container_name: step-by-step-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?Set GRAFANA_ADMIN_PASSWORD}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+  dora-exporter:
+    image: python:3.11-alpine
+    container_name: step-by-step-dora-exporter
+    working_dir: /app
+    command: python -u /app/dora_exporter.py
+    volumes:
+      - ./scripts/dora_exporter.py:/app/dora_exporter.py:ro
+      - ./observability/dora:/data:ro
+    restart: unless-stopped
 
 networks:
   cicd:
@@ -96,3 +129,5 @@ volumes:
   nexus_data:
   jenkins_agent_work:
   jenkins_agent_m2:
+  prometheus_data:
+  grafana_data:

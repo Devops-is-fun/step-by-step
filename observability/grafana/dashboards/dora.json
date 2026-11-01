@@ -1,0 +1,44 @@
+{
+  "uid": "step-by-step-dora",
+  "title": "Step by Step - DORA",
+  "tags": ["dora", "cicd", "step-by-step"],
+  "timezone": "browser",
+  "schemaVersion": 41,
+  "version": 1,
+  "refresh": "30s",
+  "time": {"from": "now-30d", "to": "now"},
+  "panels": [
+    {
+      "id": 1, "type": "table", "title": "Fréquence des déploiements (par semaine)",
+      "gridPos": {"h": 9, "w": 12, "x": 0, "y": 0},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [{"refId": "A", "expr": "dora_deployment_frequency", "instant": true, "format": "table"}],
+      "options": {"showHeader": true, "cellHeight": "sm"},
+      "fieldConfig": {"defaults": {"unit": "short", "decimals": 0}, "overrides": []}
+    },
+    {
+      "id": 2, "type": "table", "title": "Délai médian commit → production (heures)",
+      "gridPos": {"h": 9, "w": 12, "x": 12, "y": 0},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [{"refId": "A", "expr": "dora_lead_time_hours", "instant": true, "format": "table"}],
+      "options": {"showHeader": true, "cellHeight": "sm"},
+      "fieldConfig": {"defaults": {"unit": "h", "decimals": 2}, "overrides": []}
+    },
+    {
+      "id": 3, "type": "table", "title": "Délai médian merge → production (heures)",
+      "gridPos": {"h": 9, "w": 12, "x": 0, "y": 9},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [{"refId": "A", "expr": "dora_change_lead_time_hours", "instant": true, "format": "table"}],
+      "options": {"showHeader": true, "cellHeight": "sm"},
+      "fieldConfig": {"defaults": {"unit": "h", "decimals": 2}, "overrides": []}
+    },
+    {
+      "id": 4, "type": "table", "title": "Taux d'échec des changements (%)",
+      "gridPos": {"h": 9, "w": 12, "x": 12, "y": 9},
+      "datasource": {"type": "prometheus", "uid": "prometheus"},
+      "targets": [{"refId": "A", "expr": "dora_change_failure_rate", "instant": true, "format": "table"}],
+      "options": {"showHeader": true, "cellHeight": "sm"},
+      "fieldConfig": {"defaults": {"unit": "percent", "decimals": 2, "min": 0, "max": 100}, "overrides": []}
+    }
+  ]
+}

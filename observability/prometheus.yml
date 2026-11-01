@@ -1,0 +1,22 @@
+
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: "step-by-step-staging"
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets:
+          - "host.docker.internal:8082"
+
+  - job_name: "step-by-step-production"
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets:
+          - "host.docker.internal:8088"
+
+  - job_name: "step-by-step-dora"
+    metrics_path: /metrics
+    static_configs:
+      - targets:
+          - "dora-exporter:9105"

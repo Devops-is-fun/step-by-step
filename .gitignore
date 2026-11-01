@@ -41,3 +41,10 @@ id_rsa*
 id_ed25519*
 secrets/
 /data/
+
+# Données Jenkins utilisées pour les tests locaux
+dora-test/
+
+# Fichiers temporaires Python
+__pycache__/
+*.pyc
