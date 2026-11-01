@@ -42,3 +42,7 @@
 
 * `task-005` ét. 2 : l'ordre annoncé des classes Failsafe (`StepByStepApplicationIT` puis `TaskRepositoryIT`) n'est pas garanti, et les `WARNING` Mockito/JDK 25 s'intercalent. Précisé dans le tutoriel [TRAITE: story-008 task-005]
 * `task-006` ét. 5 : `Conflict. The container name "/step-by-step-local" is already in use` : un `docker run` antérieur, en échec, avait laissé un conteneur à l'état `Created`. Cas ajouté à « Si tu es bloqué » [TRAITE: story-008 task-006]
+
+## 2026-11-01 — Erreurs dans les tutoriels de la story 010
+
+* `task-009` ét. 3 : `push -> build start: 16 s` au lieu de < 10 s. Le webhook atteint Jenkins en ≈ 1 s ; s'y ajoutent l'attente de 5 s de GitHub Branch Source et la *quiet period* globale de 5 s, non anticipées. Corrigé : explication dans `task-009`, *quiet period* à 0 et nouvelle mesure sur `main` dans `task-010` [TRAITE: story-010 task-009 + task-010]

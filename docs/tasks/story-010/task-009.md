@@ -87,8 +87,16 @@ dans ses URL (`%2F`).
 `demo-webhook` existe-t-il ? », et compare son heure de départ (`timestamp`, en millisecondes) à
 l'heure du push.
 
-**Note `N`** : c'est la preuve demandée par la story (« horodatage push → build »). Tu la
-reporteras au tutoriel 010.
+**Si `N` dépasse 10 s (≈ 16 s sur une branche neuve) :** le webhook, lui, arrive en ≈ 1 s
+(`docker logs -t cicd-webhook-relay`). Le reste, ce sont **deux attentes volontaires de Jenkins** :
+
+| Attente | Durée | Où la voir |
+|---------|-------|------------|
+| GitHub Branch Source attend avant de traiter l'événement (le temps que l'API GitHub soit à jour) | 5 s | *Multibranch Pipeline Events* du job : `Received …` puis `processed in …` |
+| *Quiet period* : Jenkins attend avant de lancer un build planifié (pour regrouper plusieurs commits) | 5 s | **Manage Jenkins → System → Quiet period** |
+
+La *quiet period* ne sert à rien avec un webhook : tu la passes à **0** au tutoriel 010, puis tu
+refais la mesure sur `main`. C'est **cette** mesure que tu reporteras dans la story.
 
 **✅ Vérifie que :**
 - [ ] `N` < 10
