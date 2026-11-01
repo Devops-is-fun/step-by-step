@@ -67,4 +67,10 @@ risques). Les décisions déjà prises sont dans `docs/specification/specificati
 
 ## Notes du premier lancement (Morgan)
 
-*(à compléter dans ta première PR : ce qui a coincé en suivant le README, ou « aucun écart »)*
+Java : Java 11 était initialement installé sur ma machine. Installation de Temurin 17 et configuration de JAVA_HOME pour respecter les prérequis du projet.
+
+Docker : version 27.5.1 utilisée au lieu de la version 29.x indiquée dans les prérequis. Les commandes de lancement et les tests ont néanmoins fonction
+
+Bash sous Windows : la commande bash scripts/check-no-secrets.sh lançait WSL, qui n'était pas correctement configuré. Le script a fonctionné en utilisant Git Bash avec C:\Program Files\Git\bin\bash.exe.
+
+Validation locale : 21 tests unitaires et 7 tests d'intégration réussis. Application démarrée en JAR puis en conteneur Docker, avec un état de santé UP dans les deux cas.
