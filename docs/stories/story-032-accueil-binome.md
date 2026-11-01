@@ -78,3 +78,11 @@ si besoin).
 ## Message de commit
 
 `docs(team): add contributing guide and onboarding tour`
+
+## Constat (01/11/2026)
+
+Le ruleset `protect-main` est créé, mais GitHub ne l'applique pas : « Your rulesets won't be enforced
+on this private repository until you move to GitHub Team organization account ». En attendant GitHub
+Pro (demande du *GitHub Student Developer Pack*), la règle « branche + PR + statut ✅ » est une
+**convention** écrite dans `CONTRIBUTING.md`. Le test du push refusé (tutoriel 004, étapes 2-3) sera
+fait à l'activation. Écart à citer dans le rapport technique (story 026, section 7).
