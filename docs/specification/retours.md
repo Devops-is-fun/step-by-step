@@ -46,3 +46,7 @@
 ## 2026-11-01 — Erreurs dans les tutoriels de la story 010
 
 * `task-009` ét. 3 : `push -> build start: 16 s` au lieu de < 10 s. Le webhook atteint Jenkins en ≈ 1 s ; s'y ajoutent l'attente de 5 s de GitHub Branch Source et la *quiet period* globale de 5 s, non anticipées. Corrigé : explication dans `task-009`, *quiet period* à 0 et nouvelle mesure sur `main` dans `task-010` [TRAITE: story-010 task-009 + task-010]
+
+## 2026-11-01 — Erreurs dans les tutoriels de la story 032
+
+* `task-004` ét. 2 : le push de test est **accepté** (`main -> main`) car le ruleset n'était pas encore enregistré. Le tutoriel ne demandait pas de vérifier qu'il était **Active** avant le test. Le commit vide reste sur `main` (inoffensif ; le retirer exigerait un `push --force`). Corrigé : vérification préalable + ligne « Si tu es bloqué » [TRAITE: story-032 task-004]

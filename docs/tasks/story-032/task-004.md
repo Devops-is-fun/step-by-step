@@ -70,6 +70,9 @@ rapport.
 
 ### Étape 2 : Vérifie la serrure
 
+**Avant tout :** la liste **Settings → Rules → Rulesets** montre `protect-main` avec la mention
+**Active**. Sinon, le push de test **partirait vraiment** sur `main`.
+
 **Où :** la racine du projet
 
 **Action :**
@@ -143,7 +146,7 @@ GitHub → **Settings → Rules → Rulesets** → `protect-main` → **Delete r
 | Problème | Solution |
 |----------|----------|
 | `continuous-integration/jenkins/pr-merge` introuvable dans **Add checks** | Tape le début (`continuous`) ; sinon vérifie que la PR #2 a bien reçu son ✅ |
-| L'étape 2 est **acceptée** (`main -> main`) | Le ruleset n'est pas **Active**, ou ne vise pas la branche par défaut : vérifie l'étape 1, puis **annule le push** avec moi |
+| L'étape 2 est **acceptée** (`main -> main`) | Le ruleset n'était pas enregistré ou pas **Active**. Le commit vide est sur `main` : **laisse-le** (le retirer demanderait un `push --force`). Termine l'étape 1, puis refais l'étape 2 avec un nouveau commit vide |
 
 ---
 
