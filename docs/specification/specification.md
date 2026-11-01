@@ -59,60 +59,61 @@ les expliquer » :
 ## 3. Matrice de traçabilité — Exigences du TP
 
 Les identifiants ci-dessous sont **stables** : ils seront repris tels quels dans les stories.
-La colonne **Story** renvoie à `docs/stories/story-NNN-*.md` ; la colonne **Statut** reste `❌`
-jusqu'à ce que toutes les cases « Critères de Done » de la story soient cochées.
+La colonne **Story** renvoie à `docs/stories/story-NNN-*.md`. **Statut au rendu du 01/11/2026** :
+✅ fait et démontré (pipeline, vidéo ou rapport) · ⚠️ partiel, écart expliqué dans le rapport technique ·
+⏳ en cours au moment du rendu · ❌ non fait ou module écarté.
 
 ### 3.1 Partie commune (obligatoire)
 
 | ID | Exigence de l'énoncé | Story | Statut |
 |----|----------------------|-------|--------|
-| `EXG-COM-01` | Outillage démarré en une commande via `docker-compose.yml` | 001 | ❌ |
-| `EXG-COM-02` | Jenkins, SonarQube et un dépôt d'artefacts (Nexus) | 001, 002, 003, 004 | ❌ |
-| `EXG-COM-03` | Deux environnements : staging et production | 015, 017 | ❌ |
-| `EXG-COM-04` | Les builds s'exécutent sur des agents, **jamais** sur le controller | 005, 011 | ❌ |
-| `EXG-COM-05` | Pipeline as Code : Jenkinsfile **déclaratif** dans le dépôt de l'application | 011, 020 | ❌ |
-| `EXG-COM-06` | Job **Multibranch** déclenché par webhook | 010 | ❌ |
-| `EXG-COM-07` | Statut du build remonté sur les pull requests | 010 | ❌ |
-| `EXG-COM-08` | Intégration continue : lint | 011 | ❌ |
-| `EXG-COM-09` | Tests unitaires avec rapport **JUnit** | 009, 011, 021 | ❌ |
-| `EXG-COM-10` | Tests d'intégration avec **Docker Compose** | 008, 012 | ❌ |
-| `EXG-COM-11` | **Quality Gate SonarQube bloquante** | 013 | ❌ |
-| `EXG-COM-12` | Artefact **versionné avec le hash du commit** | 014 | ❌ |
-| `EXG-COM-13` | Artefact publié dans le dépôt d'artefacts (Nexus) | 014 | ❌ |
-| `EXG-COM-14` | Livraison continue : déploiement par **script idempotent** | 015, 017 | ❌ |
-| `EXG-COM-15` | Déploiement **automatique en staging** depuis `main` | 016 | ❌ |
-| `EXG-COM-16` | Déploiement en **production après validation manuelle** (`input` avec `submitter`) | 018 | ❌ |
-| `EXG-COM-17` | Production déployée à partir du **même artefact** que staging | 018 | ❌ |
-| `EXG-COM-18` | **Shared Library versionnée par tag**, utilisée pour les étapes communes | 020 | ❌ |
-| `EXG-COM-19` | Secrets **uniquement** dans les credentials Jenkins | 003, 004, 019, 025 | ❌ |
+| `EXG-COM-01` | Outillage démarré en une commande via `docker-compose.yml` | 001 | ✅ |
+| `EXG-COM-02` | Jenkins, SonarQube et un dépôt d'artefacts (Nexus) | 001, 002, 003, 004 | ✅ |
+| `EXG-COM-03` | Deux environnements : staging et production | 015, 017 | ✅ |
+| `EXG-COM-04` | Les builds s'exécutent sur des agents, **jamais** sur le controller | 005, 011 | ✅ |
+| `EXG-COM-05` | Pipeline as Code : Jenkinsfile **déclaratif** dans le dépôt de l'application | 011, 020 | ✅ |
+| `EXG-COM-06` | Job **Multibranch** déclenché par webhook | 010 | ✅ |
+| `EXG-COM-07` | Statut du build remonté sur les pull requests | 010 | ✅ |
+| `EXG-COM-08` | Intégration continue : lint | 011 | ✅ |
+| `EXG-COM-09` | Tests unitaires avec rapport **JUnit** | 009, 011, 021 | ✅ |
+| `EXG-COM-10` | Tests d'intégration avec **Docker Compose** | 008, 012 | ✅ |
+| `EXG-COM-11` | **Quality Gate SonarQube bloquante** | 013 | ✅ |
+| `EXG-COM-12` | Artefact **versionné avec le hash du commit** | 014 | ✅ |
+| `EXG-COM-13` | Artefact publié dans le dépôt d'artefacts (Nexus) | 014 | ✅ |
+| `EXG-COM-14` | Livraison continue : déploiement par **script idempotent** | 015, 017 | ✅ |
+| `EXG-COM-15` | Déploiement **automatique en staging** depuis `main` | 016 | ✅ |
+| `EXG-COM-16` | Déploiement en **production après validation manuelle** (`input` avec `submitter`) | 018 | ✅ |
+| `EXG-COM-17` | Production déployée à partir du **même artefact** que staging | 018 | ✅ |
+| `EXG-COM-18` | **Shared Library versionnée par tag**, utilisée pour les étapes communes | 020 | ✅ |
+| `EXG-COM-19` | Secrets **uniquement** dans les credentials Jenkins | 003, 004, 019, 025 | ✅ |
 
 ### 3.2 Module N1a — Qualité et retour rapide
 
 | ID | Exigence de l'énoncé | Story | Statut |
 |----|----------------------|-------|--------|
-| `EXG-N1a-01` | Couverture de tests minimale imposée | 021 | ❌ |
-| `EXG-N1a-02` | Rapports publiés dans Jenkins | 021 | ❌ |
-| `EXG-N1a-03` | Notification de chaque build (Slack, Discord ou e-mail) | 021 | ❌ |
-| `EXG-N1a-04` | Pipeline de **moins de 10 minutes** grâce au parallélisme et au cache | 022 | ❌ |
+| `EXG-N1a-01` | Couverture de tests minimale imposée | 021 | ✅ |
+| `EXG-N1a-02` | Rapports publiés dans Jenkins | 021 | ✅ |
+| `EXG-N1a-03` | Notification de chaque build (Slack, Discord ou e-mail) | 021 | ✅ |
+| `EXG-N1a-04` | Pipeline de **moins de 10 minutes** grâce au parallélisme et au cache | 022 | ✅ |
 
 ### 3.3 Module N1b — Releases automatisées
 
 | ID | Exigence de l'énoncé | Story | Statut |
 |----|----------------------|-------|--------|
-| `EXG-N1b-01` | Conventional Commits | 006, 023 | ❌ |
-| `EXG-N1b-02` | Calcul automatique de la version (semantic-release ou release-please) | 023 | ❌ |
-| `EXG-N1b-03` | Changelog généré | 023 | ❌ |
-| `EXG-N1b-04` | Tag Git créé | 023 | ❌ |
-| `EXG-N1b-05` | Artefact versionné | 014, 023 | ❌ |
-| `EXG-N1b-06` | Notes de version publiées | 023 | ❌ |
+| `EXG-N1b-01` | Conventional Commits | 006, 023 | ✅ |
+| `EXG-N1b-02` | Calcul automatique de la version (semantic-release ou release-please) | 023 | ✅ |
+| `EXG-N1b-03` | Changelog généré | 023 | ✅ |
+| `EXG-N1b-04` | Tag Git créé | 023 | ✅ |
+| `EXG-N1b-05` | Artefact versionné | 014, 023 | ✅ |
+| `EXG-N1b-06` | Notes de version publiées | 023 | ✅ |
 
 ### 3.4 Module N2a — Déploiement progressif (blue/green)
 
 | ID | Exigence de l'énoncé | Story | Statut |
 |----|----------------------|-------|--------|
-| `EXG-N2a-01` | Stratégie **blue/green** en production (deux instances derrière un reverse proxy) | 017 | ❌ |
-| `EXG-N2a-02` | Vérification automatique de santé après bascule | 017 | ❌ |
-| `EXG-N2a-03` | **Retour arrière automatique** en cas d'échec | 017 | ❌ |
+| `EXG-N2a-01` | Stratégie **blue/green** en production (deux instances derrière un reverse proxy) | 017 | ✅ |
+| `EXG-N2a-02` | Vérification automatique de santé après bascule | 017 | ✅ |
+| `EXG-N2a-03` | **Retour arrière automatique** en cas d'échec | 017 | ✅ |
 
 ### 3.5 Module N2b — Environnements éphémères
 
@@ -136,21 +137,21 @@ jusqu'à ce que toutes les cases « Critères de Done » de la story soient coch
 
 | ID | Exigence de l'énoncé | Story | Statut |
 |----|----------------------|-------|--------|
-| `EXG-N3b-01` | Prometheus et Grafana | 024 | ❌ |
-| `EXG-N3b-02` | Les **quatre métriques DORA** calculées automatiquement depuis Jenkins et Git | 024 | ❌ |
-| `EXG-N3b-03` | Métriques suivies sur la durée du projet | 024 | ❌ |
+| `EXG-N3b-01` | Prometheus et Grafana | 024 | ✅ |
+| `EXG-N3b-02` | Les **quatre métriques DORA** calculées automatiquement depuis Jenkins et Git | 024 | ⚠️ calcul automatisé, lancé à la main |
+| `EXG-N3b-03` | Métriques suivies sur la durée du projet | 024 | ⚠️ une seule semaine mesurée |
 
 ### 3.8 Rendus attendus
 
 | ID | Exigence de l'énoncé | Story | Statut |
 |----|----------------------|-------|--------|
-| `EXG-REND-01` | Dépôts Git | 006, 020 | ❌ |
-| `EXG-REND-02` | `README.md` permettant de tout relancer | 025 | ❌ |
-| `EXG-REND-03` | Rapport technique : architecture, choix, métriques DORA | 026 | ❌ |
-| `EXG-REND-04` | Démonstration d'un commit jusqu'à la production — **en vidéo** (consigne du 01/11/2026 : plus de démo live) | 027 | ❌ |
-| `EXG-REND-05` | Échec **volontaire** bloqué par le pipeline — **en vidéo** | 013, 021, 027 | ❌ |
-| `EXG-REND-06` | Capacité de **chaque membre** à expliquer l'intégralité de la chaîne | 026, 027, 032 | ❌ |
-| `EXG-REND-07` | Doc qui justifie les choix et les décisions techniques (consigne du 01/11/2026) | 026 | ❌ |
+| `EXG-REND-01` | Dépôts Git | 006, 020 | ✅ |
+| `EXG-REND-02` | `README.md` permettant de tout relancer | 025 | ⚠️ reproduction complète non rejouée |
+| `EXG-REND-03` | Rapport technique : architecture, choix, métriques DORA | 026 | ✅ |
+| `EXG-REND-04` | Démonstration d'un commit jusqu'à la production — **en vidéo** (consigne du 01/11/2026 : plus de démo live) | 027 | ✅ |
+| `EXG-REND-05` | Échec **volontaire** bloqué par le pipeline — **en vidéo** | 013, 021, 027 | ✅ |
+| `EXG-REND-06` | Capacité de **chaque membre** à expliquer l'intégralité de la chaîne | 026, 027, 032 | ✅ |
+| `EXG-REND-07` | Doc qui justifie les choix et les décisions techniques (consigne du 01/11/2026) | 026 | ✅ |
 
 ### 3.9 Barème (sur 20)
 

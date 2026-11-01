@@ -8,6 +8,8 @@ métriques DORA).
 - Vidéo (OneDrive, 4 parties) : **[vidéo de démonstration](https://reseauges75-my.sharepoint.com/:f:/r/personal/g_rouy_myskolae_fr/Documents/Step%20by%20Step%20-%20DEMO?d=w3f8749ca9c3a4e7887fbc8d281c30769&csf=1&web=1&e=PclZux)**
 - Script de tournage : [demo.md](demo.md)
 - Les horodatages (`mm:ss`) sont relevés après le tournage.
+- Les deux sections prévues pour Morgan (CI et blue/green) ont été rédigées le 01/11/2026 au soir
+  par Géraldine, faute de temps avant le rendu ; Morgan les relit et les complète avec ses mots.
 
 ## Scénario 1 — un commit jusqu'à la production
 
@@ -17,24 +19,35 @@ La production répond (`/actuator/health` = `UP`) et nginx envoie le trafic vers
 `/etc/nginx/upstream/active.conf`. L'autre couleur garde la version précédente : c'est elle qui
 servirait en cas de retour arrière.
 
-### `mm:ss` — Merge de la PR README (commentaire de Morgan sur la CI)
+### `mm:ss` — Merge de la PR README (la CI)
 
-*À rédiger par Morgan, avec ses mots. Points à couvrir :*
+La PR affiche `continuous-integration/jenkins/pr-merge` ✅ : Jenkins a construit **le résultat du
+merge** de la branche avec `main`, pas la branche seule, et a publié son verdict sur GitHub grâce au
+jeton *fine-grained* (permission *Commit statuses*). Rien n'entre dans `main` sans ce feu vert.
 
-- *pourquoi la PR affiche le statut `continuous-integration/jenkins/pr-merge` ;*
-- *ce que font les stages en parallèle (Secrets, Lint, Unit tests), puis Integration tests (base
-  PostgreSQL jetable par build) et Quality gate (bloquante) ;*
-- *pourquoi tout tourne sur `docker-agent` et jamais sur le controller ;*
-- *comment l'artefact est versionné (`<version du pom>-<sha court>`) et publié dans Nexus.*
+Au merge, GitHub prévient Jenkins par webhook (via le relais smee.io) en une seconde environ, et le
+build de `main` démarre. Les stages **Secrets** (aucun jeton ni mot de passe dans le code), **Lint**
+(Checkstyle) et **Unit tests** (JUnit) tournent **en parallèle**. Puis **Integration tests** démarre
+une base PostgreSQL jetable, propre à ce build, et vérifie la couverture (≥ 60 %). La **Quality
+gate** attend le verdict de SonarQube et arrête le pipeline s'il est rouge.
 
-### `mm:ss` — Staging, validation, production (commentaire de Morgan sur le blue/green)
+Tout s'exécute sur l'agent `docker-agent`, jamais sur le controller (0 exécuteur) : le controller
+orchestre, l'agent construit. L'artefact prend la version du `pom.xml` suivie du hash court du
+commit (ici `0.2.0-41491fd`) et part dans le dépôt `maven-releases` de Nexus, où une version publiée
+ne peut plus être remplacée.
 
-*À rédiger par Morgan. Points à couvrir :*
+### `mm:ss` — Staging, validation, production (le blue/green)
 
-- *pourquoi l'image est construite à partir du JAR de Nexus (même artefact partout) ;*
-- *le rôle de l'`input` avec `submitter: 'admin'` ;*
-- *les étapes du blue/green : couleur libre, contrôle de santé, bascule nginx, retour arrière
-  automatique.*
+L'image déployée est construite **à partir du JAR téléchargé dans Nexus**, et non à partir des
+sources : staging et production exécutent donc exactement l'artefact publié. Le staging est déployé
+automatiquement, par un script idempotent (relancé avec la même version, il ne change rien).
+
+Le pipeline s'arrête ensuite sur l'`input` : seul le compte autorisé (`submitter: 'admin'`) peut
+envoyer **la même version** en production. Le script de production déploie sur la couleur
+inactive (ici green), attend que son contrôle de santé (`/actuator/health`) soit `UP`, puis bascule
+nginx et revérifie la santé **à travers le proxy**. En cas d'échec, nginx reste sur (ou revient à)
+l'ancienne couleur : c'est le retour arrière automatique. L'ancienne couleur continue de tourner,
+prête pour un retour arrière immédiat.
 
 ### `mm:ss` — L'application en production (Géraldine)
 
