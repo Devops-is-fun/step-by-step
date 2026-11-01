@@ -83,6 +83,6 @@ l'URL du canal smee.io, le secret du webhook, le jeton GitHub (Bitwarden + crede
 
 ## Mesure
 
-Push sur `main` → début du build : **10 s** (<date>, relais smee.io, *quiet period* 0).
+Push sur `main` → début du build : **10 s** (01/11/2026, relais smee.io, *quiet period* 0).
 Le webhook atteint Jenkins en ≈ 1 s ; GitHub Branch Source attend ensuite 5 s par conception.
 Première mesure (branche neuve `demo-webhook`, *quiet period* 5) : 16 s.

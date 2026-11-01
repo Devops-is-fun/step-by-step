@@ -14,7 +14,7 @@ description: Breaking the CI/CD project specification into traceable User Storie
 |------|-------|
 | Nature | CI/CD course assignment (ESGI Master 1) |
 | Statement | `docs/Projet_CICD_Jenkins.pdf` |
-| Working mode | **Solo** — the statement's group requirement is ignored |
+| Working mode | **Pair** since 01/11/2026 (solo until story 010). Split and AI usage rules: specification, « Organisation du binôme » |
 | Stack | Java / Spring Boot + Maven / JUnit 5 |
 | Tooling | Docker Compose: Jenkins (controller + agents), SonarQube, Nexus |
 | Environments | staging and production, as two local Docker Compose stacks |

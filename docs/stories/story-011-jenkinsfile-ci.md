@@ -17,6 +17,9 @@ d'obtenir un rapport JUnit par build.
   controller (`EXG-COM-04`).
 - Le pipeline appelle `scripts/check-agents.sh` (story 005) avec une credential Jenkins dédiée
   (jeton d'API d'un compte en lecture) : l'invariant `EXG-COM-04` est testé à chaque build.
+- Stage **Secrets** : `./scripts/check-no-secrets.sh` sur le code récupéré, échec si un secret est
+  trouvé. C'est le filet qui ne dépend pas du hook local (qu'un membre du binôme pourrait ne pas avoir
+  installé).
 - Stage **Lint** : `./mvnw -B checkstyle:check spotbugs:check`, échec si violations.
 - Stage **Unit Tests** : `./mvnw -B test`.
 - Stage **Report** : `junit` comme `post { always }` + `archiveArtifacts` des rapports XML.

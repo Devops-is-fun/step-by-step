@@ -13,7 +13,8 @@ vierge, afin que je puisse évaluer le projet sans te poser de question.
 
 Le README contient, dans cet ordre :
 
-1. **Présentation** en trois phrases, et avertissement que le projet est solo.
+1. **Présentation** en trois phrases, et l'équipe : un binôme, avec le lien vers la répartition des
+   stories (spécification, « Organisation du binôme »).
 2. **Prérequis** : versions exactes (Docker Desktop, JDK 17, `docker compose` v2, relais webhook smee.io).
 3. **Démarrage** : une commande pour l'outillage, une commande pour le relais webhook, une commande pour l'app.
 4. **Ordre des étapes** : la liste des 6 credentials à créer, avec l'ordre exact.
@@ -22,7 +23,7 @@ Le README contient, dans cet ordre :
 7. **Tests et couverture** : `./mvnw -B verify`, seuil 60 %.
 8. **Règles métier** : les sept règles de gestion.
 9. **Dépannage** : au minimum 5 pannes réelles rencontrées, avec le symptôme et la parade.
-10. **Palette des liens** vers le rapport technique et le script de soutenance.
+10. **Palette des liens** vers le rapport technique et la **vidéo de démonstration**.
 
 ## Preuves attendues
 

@@ -11,7 +11,7 @@ description: Découpe une story CI/CD en tutoriels pas-à-pas TDA-friendly (infr
 |---------|--------|
 | Nature du travail | TP du cours CI/CD (ESGI Master 1 « Information Architecture des Logiciels ») |
 | Énoncé de référence | `docs/Projet_CICD_Jenkins.pdf` |
-| Travail | **En solo.** L'exigence « en groupe / trinôme / quadrinôme » de l'énoncé est **ignorée** |
+| Travail | **En binôme** depuis le 01/11/2026 (solo jusqu'à la story 010). Répartition et règles d'usage de l'IA : spécification, « Organisation du binôme » |
 | Application web | **Java / Spring Boot**, build **Maven**, tests **JUnit 5**, lint via plugin Maven |
 | Outillage CI/CD | Docker Compose : **Jenkins** (controller), **SonarQube**, **Nexus** (dépôt d'artefacts) |
 | Environnements | **staging** et **production**, deux stacks **Docker Compose en local** |
@@ -28,6 +28,13 @@ description: Découpe une story CI/CD en tutoriels pas-à-pas TDA-friendly (infr
 | L'utilisatrice | les commits et les push (jamais faits par Claude) |
 
 Zone grise (plugin Maven de qualité, profil de build) : classée CI/CD par défaut, et signalée.
+
+Depuis le 01/11/2026, une story peut être attribuée au **binôme** (voir la spécification) : ses
+tutoriels s'adressent alors à lui (pas d'hypothèse sur son historique avec le projet), et rappellent
+les règles d'usage de l'IA (ChatGPT ou Claude) de la section « Organisation du binôme ».
+
+Depuis la story 032, `main` est protégée : **chaque story se termine par une branche + une PR**
+(statut Jenkins ✅ exigé), jamais par un `git push` direct sur `main`.
 
 ## Qu'est-ce que je fais
 
