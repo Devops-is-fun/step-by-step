@@ -6,14 +6,16 @@ scrape_configs:
   - job_name: "step-by-step-staging"
     metrics_path: /actuator/prometheus
     static_configs:
+      # The deployment scripts connect Prometheus to the stack network (scripts/connect-prometheus.sh)
       - targets:
-          - "host.docker.internal:8082"
+          - "stepbystep-staging-app-1:8080"
 
   - job_name: "step-by-step-production"
     metrics_path: /actuator/prometheus
     static_configs:
       - targets:
-          - "host.docker.internal:8088"
+          - "stepbystep-production-app-blue-1:8080"
+          - "stepbystep-production-app-green-1:8080"
 
   - job_name: "step-by-step-dora"
     metrics_path: /metrics

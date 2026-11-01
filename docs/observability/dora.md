@@ -56,6 +56,21 @@ de déploiements analysés, multiplié par 100.
 
 Unité : pourcentage.
 
+### 5. Temps médian de restauration
+
+Pour chaque déploiement en production en échec (trace de
+rollback), durée jusqu'au déploiement réussi suivant,
+comptée dans la semaine de l'échec. Grâce au blue/green,
+le service lui-même continue de répondre pendant ce temps :
+c'est la durée pour **remettre une nouvelle version en
+service**, pas une durée d'indisponibilité.
+
+Unité : heures. Vide si la semaine n'a connu aucun échec.
+
+Les quatre métriques DORA sont donc couvertes : fréquence
+de déploiement (1), délai de mise en production (2, avec
+la variante 3), taux d'échec (4) et temps de restauration (5).
+
 ## Calcul des métriques
 
 Variables d'environnement :
@@ -104,8 +119,30 @@ Interfaces :
 - Cibles Prometheus : http://localhost:9090/targets
 - Grafana : http://localhost:3000
 
-Le mot de passe administrateur Grafana est fourni via
-la variable `GRAFANA_ADMIN_PASSWORD`.
+Les ports n'écoutent que sur `127.0.0.1`, comme le reste de
+l'outillage. Les dashboards sont lisibles sans connexion
+(accès anonyme en lecture). Le compte `admin` (mot de passe
+initial `admin`, à changer à la première connexion, puis
+rangé dans le gestionnaire de mots de passe) sert à
+l'administration.
+
+Les applications n'écoutent que sur `127.0.0.1` : Prometheus
+ne peut pas les joindre par l'hôte. Les scripts de
+déploiement le connectent donc au réseau Docker de chaque
+stack (`scripts/connect-prometheus.sh`), et il collecte les
+conteneurs par leur nom (`stepbystep-staging-app-1`,
+`stepbystep-production-app-blue-1`, `…-green-1`). Après un
+redémarrage de Prometheus, relancer :
+
+```bash
+./scripts/connect-prometheus.sh stepbystep-staging
+./scripts/connect-prometheus.sh stepbystep-production
+```
+
+La couleur inactive de la production peut apparaître `DOWN`
+(code 404) tant qu'elle porte une version antérieure à
+l'instrumentation : c'est attendu, elle sera à jour au
+déploiement suivant.
 
 ## Limitations
 
@@ -132,7 +169,7 @@ Vérifier :
 1. Le CSV généré et ses colonnes.
 2. L'exécution de `scripts/check-dora.sh`.
 3. L'état `UP` de la cible `step-by-step-dora`.
-4. Les quatre panneaux du dashboard Grafana.
+4. Les cinq panneaux du dashboard Grafana.
 5. Les endpoints `/actuator/prometheus` de staging
    et production après déploiement de la version
    instrumentée.

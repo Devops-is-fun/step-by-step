@@ -18,7 +18,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 COLUMNS = ['week', 'deployment_frequency', 'lead_time_hours',
-           'change_lead_time_hours', 'change_failure_rate']
+           'change_lead_time_hours', 'change_failure_rate', 'time_to_restore_hours']
 SUCCESS = re.compile(r'OK\s+production serves\s+step-by-step:([^\s]+)')
 ROLLBACK = re.compile(r'KO\s+[^\n]*rollback', re.IGNORECASE)
 VERSION_SHA = re.compile(r'-([0-9a-f]{7,40})$')
@@ -90,7 +90,8 @@ def get_builds(args):
 def collect(args):
     builds, offline = get_builds(args)
     history = main_history()
-    weekly = defaultdict(lambda: {'count': 0, 'failed': 0, 'commit': [], 'merge': [], 'builds': 0})
+    weekly = defaultdict(lambda: {'count': 0, 'failed': 0, 'commit': [], 'merge': [], 'restore': [], 'builds': 0})
+    events = []  # (time, succeeded) of every production deployment, for the time to restore
     for build in builds:
         build_start = int(build['timestamp']) / 1000
         build_week = datetime.fromtimestamp(build_start, timezone.utc).strftime('%G-W%V')
@@ -124,6 +125,7 @@ def collect(args):
         row['count'] += 1
         if rollback:
             row['failed'] += 1
+        events.append((event_time, bool(match) and not rollback))
         if not match:
             continue
         sha_match = VERSION_SHA.search(match.group(1))
@@ -136,7 +138,21 @@ def collect(args):
             row['commit'].append((event_time - authored) / 3600)
         if landed is not None and event_time >= landed:
             row['merge'].append((event_time - landed) / 3600)
+    add_time_to_restore(weekly, events)
     return weekly
+
+
+def add_time_to_restore(weekly, events):
+    """Time to restore: from a failed production deployment to the next successful one, counted in the
+    week of the failure. Thanks to the blue/green rollback, the service itself kept answering meanwhile."""
+    events.sort()
+    for index, (failed_at, succeeded) in enumerate(events):
+        if succeeded:
+            continue
+        restored_at = next((when for when, ok in events[index + 1:] if ok), None)
+        if restored_at is not None:
+            week = datetime.fromtimestamp(failed_at, timezone.utc).strftime('%G-W%V')
+            weekly[week]['restore'].append((restored_at - failed_at) / 3600)
 
 
 def write_csv(weekly, output):
@@ -148,7 +164,8 @@ def write_csv(weekly, output):
             def median(key):
                 return round(statistics.median(row[key]), 2) if row[key] else ''
             writer.writerow([week, row['count'], median('commit'), median('merge'),
-                             round(100 * row['failed'] / row['count'], 2) if row['count'] else ''])
+                             round(100 * row['failed'] / row['count'], 2) if row['count'] else '',
+                             median('restore')])
     print(f'CSV écrit : {output} ({len(weekly)} semaines)')
 
 

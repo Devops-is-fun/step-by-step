@@ -62,4 +62,5 @@ if ! proxy_healthy; then
   fi
   exit 1
 fi
+"$ROOT/scripts/connect-prometheus.sh" "$PROJECT"
 echo "OK  production serves step-by-step:$VERSION on $target (previous: $active)"
