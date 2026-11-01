@@ -16,12 +16,12 @@ Le rapport contient :
 1. **Contexte et périmètre** : pourquoi N1a + N1b + N2a + N3b, et pourquoi pas N2b ni N3a.
 2. **Architecture** : le diagramme de la chaîne, les composants, les ports, les environnements.
 3. **Choix techniques argumentés**, chacun avec alternative écartée et raison : Java 17,
-   Thymeleaf, PostgreSQL, Nexus, jreleaser, tunnel webhook, blue/green local.
+   Thymeleaf, PostgreSQL, Nexus, jreleaser, relais webhook smee.io, blue/green local.
 4. **Sécurité** : l'inventaire des secrets et la preuve qu'aucun n'est versionné.
 5. **Métriques DORA** : le tableau des 4 métriques, valeurs mesurées, graphique Grafana, et la
    limite honnête de l'échantillon.
 6. **Performance du pipeline** : avant/après, gains réels et échecs des optimisations tentées.
-7. **Écarts et compromis assumés** : module non retenu, tunnel en remplacement d'un webhook natif.
+7. **Écarts et compromis assumés** : module non retenu, relais smee.io plutôt qu'un tunnel, pour ne pas exposer Jenkins.
 8. **Ce que j'ai appris**, y compris les pannes rencontrées.
 
 ## Preuves attendues

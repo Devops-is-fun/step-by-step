@@ -20,7 +20,7 @@ volontaire — et un argumentaire complet, afin de démontrer la chaîne en dire
   staging toujours sur l'ancienne version).
 - **Argumentaire** (`EXG-REND-06`) : une réponse préparée pour chacune de ces questions probables :
   pourquoi un agent et pas le controller, pourquoi jreleaser, comment fonctionne le rollback, d'où
-  viennent les métriques DORA, que se passe-t-il si SonarQube tombe, pourquoi un tunnel.
+  viennent les métriques DORA, que se passe-t-il si SonarQube tombe, pourquoi un relais smee.io plutôt qu'un tunnel.
 - **Plan B** : captures d'écran et journaux de tout build réussi, au cas où le direct échoue.
 - La répétition est faite **au moins deux fois**, avec un chronomètre.
 
@@ -56,7 +56,7 @@ Captures d'écran de sessions contenant des tokens
 
 | Risque | Parade |
 |--------|--------|
-| Tunnel mort pendant la soutenance | Plan B : captures et reLANCEMENT du tunnel en 10 s |
+| Relais ou smee.io en panne pendant la soutenance | Plan B : captures, `docker restart cicd-webhook-relay`, ou *Scan Repository Now* |
 | Démo trop longue | Scénario 1 minuté, décisions de coupe listées |
 | Panne inconnue | Scénario 2 réglé à l'avance, donc maîtrisé |
 

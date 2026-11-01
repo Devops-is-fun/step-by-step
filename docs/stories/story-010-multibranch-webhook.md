@@ -12,19 +12,21 @@ d'avoir une boucle de feedback court exigée par le cours.
 
 ## Décision structurante
 
-`EXG-COM-06` exige un webhook. Jenkins tournant sur `localhost:8080` est **injoignable** depuis GitHub :
-le choix retenu est un **tunnel** (Cloudflare Tunnel ou ngrok) qui expose Jenkins publiquement.
-Le SCM polling n'est conservé que comme **repli documenté**, pas comme solution principale.
+`EXG-COM-06` exige un webhook. Jenkins tournant sur `localhost:8080` est **injoignable** depuis GitHub.
+Choix initial : un tunnel (Cloudflare Tunnel ou ngrok). **Remplacé le 31/10/2026 (`tasks-fr 010`, `1a`)
+par un relais smee.io** : un tunnel exposerait toute l'interface Jenkins à Internet, alors que le
+relais (conteneur `cicd-webhook-relay`) ne transmet que les webhooks, signés par le secret partagé.
+Le scan périodique quotidien est conservé comme **repli documenté**.
 
 ## Critères d'acceptation
 
 - Le job `step-by-step` est de type **Multibranch Pipeline**, branché sur le dépôt GitHub via
-  `credentialsId: github-token`.
+  `credentialsId: github-token` (*Username with password*, jeton *fine-grained* limité au dépôt).
 - Le scan initial détecte `main`.
 - Un webhook `POST` GitHub déclenche un build en moins de 10 secondes, sans scan manuel.
 - Le webhook est configuré dans GitHub avec le secret partagé.
-- Le build apparaît sur la pull request (statut dans l'onglet Checks), ou le build notifié par le SCM.
-- Le tunnel est documenté avec sa commande de relance exacte.
+- Le build apparaît sur la pull request (statut de commit `continuous-integration/jenkins/pr-merge`).
+- Le relais est documenté avec sa commande de relance exacte.
 
 ## Preuves attendues
 
@@ -37,30 +39,33 @@ Le SCM polling n'est conservé que comme **repli documenté**, pas comme solutio
 
 ## Automatisation des tests
 
-`scripts/check-webhook.sh` : envoie un `POST` vide sur l'URL du webhook et vérifie un
-`HTTP 200`/`201` en moins de 5 secondes. Le test échoue si Jenkins ne répond pas — donc si le tunnel
-est mort.
+`scripts/check-webhook.sh` : vérifie que le relais tourne, poste sur l'URL smee un *ping* signé comme
+ceux de GitHub, puis lit dans les logs du relais la réponse de **Jenkins** (`200` attendu, `400` =
+mauvais secret) en moins de 5 secondes. Le `200` de smee.io seul ne prouverait rien.
 
 ## Documentation
 
-`docs/tooling/webhook-tunnel.md` : installation du tunnel, URL publique, configuration du webhook
-GitHub, procédure de relance, plan B (polling).
+`docs/tooling/webhook-relay.md` : relais smee.io, valeurs et leur rangement, configuration Jenkins et
+GitHub, commande de relance, vérification, dépannage, repli (scan quotidien).
 
 ## Fichiers à versionner
 
-- `docs/tooling/webhook-tunnel.md`
+- `Jenkinsfile` (minimal)
+- `docs/tooling/webhook-relay.md`
 - `scripts/check-webhook.sh`
 
 ## Fichiers à ne jamais versionner
 
-`cloudflared.yml` local si il contient un token, `tunnel.log`
+l'URL du canal smee.io, le secret du webhook, le jeton GitHub (Bitwarden + credentials Jenkins seulement)
 
 ## Risques
 
 | Risque | Parade |
 |--------|--------|
-| URL du tunnel change à chaque relance | Domaine tunnel nommé (stable) et procédure de reconfiguration documentée |
-| Machine éteinte → webhook perdu | Tunnel relancé au démarrage ; le SCM rescanne au retour |
+| smee.io indisponible ou lent | Scan quotidien + *Scan Repository Now* documentés |
+| Machine éteinte → webhook perdu | Relais `--restart unless-stopped` ; scan quotidien au retour |
+| URL smee divulguée | Lecture des notifications seulement ; tout webhook non signé est refusé (`400`) ; nouveau canal + mise à jour du webhook |
+| Jeton GitHub expiré (90 jours) | Date d'expiration notée dans Bitwarden ; procédure dans `webhook-relay.md` |
 | Plugin manquant → pas de Multibranch | `github-branch-source` vérifié en story 002 |
 
 ## Critères de Done
@@ -68,8 +73,10 @@ GitHub, procédure de relance, plan B (polling).
 - [ ] Job Multibranch actif sur le dépôt
 - [ ] Push → build automatique en moins de 10 s
 - [ ] Statut de build visible sur la PR
-- [ ] Tunnel documenté avec commande de relance
+- [ ] Relais documenté avec commande de relance
 
 ## Message de commit
 
-`docs(jenkins): document multibranch pipeline and github webhook tunnel`
+1. `ci(pipeline): add minimal jenkinsfile running on the docker agent`
+2. `ci(webhook): add webhook check script and relay documentation` (branche `demo-webhook`, PR #1)
+3. `docs(jenkins): record webhook push-to-build delay`

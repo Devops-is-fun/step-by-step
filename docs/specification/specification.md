@@ -261,7 +261,7 @@ S'y ajoute un **vocabulaire sans jargon** : les libellés sont des phrases court
 ```mermaid
 flowchart TD
     Dev[Développeur] -->|commit / pull request| Git[GitHub]
-    Git -->|webhook| MB[Job Multibranch Jenkins]
+    Git -->|webhook via relais smee.io| MB[Job Multibranch Jenkins]
     MB -->|build sur l'agent| Ag[Agent Jenkins]
     Ag --> L[Lint — Checkstyle / SpotBugs]
     L --> U[Tests unitaires — rapport JUnit]
@@ -325,7 +325,9 @@ credentials Jenkins, référencés par leur identifiant dans le pipeline.
 | Jeton SonarQube | credentials Jenkins de type *Secret text* (`sonar-token`) | `sonar.login` |
 | Identifiants Nexus | credentials Jenkins *Username/Password* (`nexus-deploy-creds`) | `withCredentials` + `deploy-file` |
 | URL du webhook Discord | credentials Jenkins *Secret text* (`discord-webhook`) | notification de build **et** rappels de l'application |
-| Jeton GitHub | credentials Jenkins *Secret text* (`github-token`) | webhook et statut de PR |
+| Jeton GitHub *fine-grained* (dépôt `step-by-step` seul) | credentials Jenkins *Username with password* (`github-token`) : le plugin GitHub Branch Source n'accepte que ce type | scan Multibranch et statut de PR |
+| Secret partagé du webhook GitHub | credentials Jenkins *Secret text* (`github-webhook-secret`) + gestionnaire de mots de passe | vérification de signature des webhooks (*Shared secrets*) |
+| URL du canal smee.io | gestionnaire de mots de passe, lue par `read -rs` | webhook GitHub, conteneur `cicd-webhook-relay`, `check-webhook.sh` |
 | Mots de passe PostgreSQL staging et production | credentials Jenkins *Username/Password* | `docker compose` via variables d'environnement injectées |
 
 Ce qui **ne** doit jamais apparaître dans le dépôt : `.env` et ses variantes, `secrets/`,
@@ -379,7 +381,7 @@ Contrôle systématique : la section `git status` avant chaque commit fait parti
 - **Décision :** déclenchement du webhook GitHub vers Jenkins local → **tunnel** (Cloudflare Tunnel ou
   ngrok), et non polling (`1a`) · Raison : `EXG-COM-06` exige un webhook ; `localhost:8080` est
   injoignable depuis GitHub. Le SCM polling reste documenté comme repli, jamais comme solution
-  principale · Date : 02/10/2026
+  principale · Date : 02/10/2026 · **Remplacée le 31/10/2026** (voir plus bas : relais smee.io)
 - **Décision :** périmètre applicatif → **noyau minimal dans le périmètre principal, reste de
   l'application en bonus** (`2a`) · Raison : le barème porte sur la chaîne CI/CD ; garder
   l'application au strict nécessaire pour alimenter tests, couverture et gate, et poursuivre
@@ -410,7 +412,8 @@ Contrôle systématique : la section `git status` avant chaque commit fait parti
   02/10/2026
 - **Décision :** exposition des ports → **écoute sur `127.0.0.1` uniquement** (`3a`) · Raison : Jenkins
   est un contrôleur d'exécution ; le seul point d'entrée public prévu reste le tunnel de la story 010,
-  lui-même protégé · Date : 02/10/2026
+  lui-même protégé · Date : 02/10/2026 · Depuis le 31/10/2026, **aucun** point d'entrée public : le
+  relais smee.io va chercher les webhooks depuis l'intérieur
 - **Décision :** organisation des fichiers Compose → **un fichier par finalité** (`4a`) ·
   Raison : `docker-compose.yml` racine = outillage seul (Jenkins, SonarQube, Nexus, puis Prometheus et
   Grafana en story 024) ; `environments/staging/` et `environments/production/` sont autonomes, donc
@@ -463,6 +466,13 @@ Contrôle systématique : la section `git status` avant chaque commit fait parti
   vérifiée par requête avant enregistrement (l'index unique reste le filet), messages utilisateur en
   français, code en anglais (`1a`-`5a`, `tasks-fr 009`) · Raison : testable avec Mockito sans base ;
   `REG-03` à `REG-07` restent en story 028 · Date : 29/10/2026
+- **Décision :** webhook GitHub → Jenkins local → **relais smee.io** (conteneur
+  `cicd-webhook-relay`, `smee-client@5.0.0`, créé par `docker run` pour ne jamais écrire l'URL dans
+  un fichier), au lieu d'un tunnel ; jeton GitHub *fine-grained* limité au dépôt ; `Jenkinsfile`
+  minimal (`./mvnw -B validate` sur `docker-agent`) ; PR de démonstration (`1a`-`4a`,
+  `tasks-fr 010`) · Raison : un tunnel exposerait toute l'interface Jenkins à Internet, le relais ne
+  transmet que les webhooks, signés par le secret partagé ; le scan quotidien reste le repli ·
+  Date : 31/10/2026
 
 ### Modules bonus
 
