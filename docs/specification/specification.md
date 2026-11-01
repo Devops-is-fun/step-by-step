@@ -40,8 +40,7 @@ Chaque PR est relue par l'autre membre : chacun doit pouvoir expliquer toute la 
 | Géraldine | Morgan |
 |-----------|--------|
 | 001 à 014 (dont 010 à 014 : webhook, CI, intégration, gate, artefact) | 032 Accueil du binôme |
-| 016 Déploiement auto en staging | 015 Staging idempotent |
-| 018 Validation manuelle en production | 017 Blue/green — module **N2a** |
+| 015 à 018 : staging, blue/green — module **N2a**, validation manuelle (repris le 01/11, voir journal) | 015 : première version du staging |
 | 019 Secrets, 020 Shared Library | 023 Releases automatisées — module **N1b** |
 | 021, 022 — module **N1a** | 024 Prometheus, Grafana, DORA — module **N3b** |
 | | 025 README |
@@ -174,7 +173,7 @@ jusqu'à ce que toutes les cases « Critères de Done » de la story soient coch
 ### 3.11 Composition de l'équipe
 
 L'énoncé ne fixe le volume que pour un trinôme (partie commune + 4 modules dont au moins 1 de niveau
-3) et un quadrinôme. Le travail, d'abord solo, se fait **en binôme depuis le 01/11/2026** ; la règle
+3 ) et un quadrinôme. Le travail, d'abord solo, se fait **en binôme depuis le 01/11/2026** ; la règle
 donnée par le professeur pour un binôme est **partie commune + 4 modules dont au moins 1 de niveau
 3** : le périmètre N1a + N1b + N2a + N3b la respecte sans changement.
 
@@ -252,7 +251,7 @@ S'y ajoute un **vocabulaire sans jargon** : les libellés sont des phrases court
 | Tests | JUnit 5 + AssertJ + Mockito, `maven-failsafe-plugin` pour l'intégration | Rapports JUnit exigés par `EXG-COM-09` |
 | Couverture | JaCoCo + `jacoco-maven-plugin` | Seuil minimal imposé par `EXG-N1a-01` |
 | Lint / statique | Checkstyle + SpotBugs (plugins Maven) | `EXG-COM-08` sans outil propriétaire |
-| Interface | Thymeleaf + CSS léger + JavaScript natif (SSE via `EventSource`) | Un seul projet et un seul artefact : déploiement idempotent et blue/green réellement démontrables |
+| Interface | **API REST JSON** (`/api/tasks`, `docs/architecture/api.md`) ; écran Thymeleaf + SSE reporté au bonus (story 028) | Un seul projet et un seul artefact : déploiement idempotent et blue/green réellement démontrables |
 | Base de données | PostgreSQL dans Docker Compose | Donne un sens concret à `EXG-COM-10` ; ouvre le bonus migrations |
 | Migrations | Flyway | Bonus `EXG-BON-02`, directement issu du choix de PostgreSQL |
 | Image | Dockerfile multi-étapes (build + runtime JRE) | Artefact `EXG-COM-12` déployable en staging et production |
@@ -509,6 +508,27 @@ Contrôle systématique : la section `git status` avant chaque commit fait parti
   (story 027) et rapport technique qui justifie les choix (story 026) · Raison : consignes du cours
   modifiées le 01/11/2026 ; Jenkins reste sur la machine de l'étudiante, donc le binôme prend les
   stories qui produisent surtout des fichiers · Date : 01/11/2026
+- **Décision :** rendu final avancé au **01/11/2026 à minuit** → Claude écrit aussi les fichiers CI/CD
+  (Jenkinsfile, scripts, Compose, nginx, Shared Library), Géraldine les lance, configure Jenkins et
+  les relit ; Géraldine reprend le déploiement (015-018) car il s'exécute sur sa machine ; Morgan
+  porte N1b, N3b et le README · Raison : délai incompatible avec des tutoriels pas à pas · Date :
+  01/11/2026
+- **Décision :** Shared Library → **dossier `pipeline-library/` du dépôt applicatif**, versionnée par
+  tags `lib-v*` et épinglée dans le `Jenkinsfile` (remplace le dépôt séparé `cicd-shared-lib`) ·
+  Raison : un seul jeton GitHub limité au dépôt ; l'invariant « pas de tag, pas de changement » reste
+  démontrable (`lib-v1.0.0` → `lib-v1.1.1`) · Date : 01/11/2026
+- **Décision :** releases N1b → **release-please** (GitHub Actions), à la place de jreleaser ·
+  Raison : aucun droit d'écriture GitHub donné à Jenkins ; la PR de release est relue avant
+  publication ; la version du `pom.xml` alimente la version des artefacts Nexus · Date : 01/11/2026
+- **Décision :** interface → **API REST JSON** sur `TaskService` (`/api/tasks` : lister, voir, créer,
+  ajouter une sous-étape, planifier ; refus des règles en `400` avec message en français), à la place
+  de l'écran Thymeleaf reporté au bonus (story 028) · Raison : l'énoncé demande une application
+  **web** utilisable ; l'API rend les règles démontrables en production (vidéo) en 20 minutes de
+  code testé · Date : 01/11/2026
+- **Décision :** livraison → image d'exécution construite **depuis le JAR de Nexus**
+  (`scripts/build-runtime-image.sh`), staging idempotent, production blue/green nginx avec retour
+  arrière automatique, `input` avec `submitter: 'admin'` · Raison : « le même artefact » de bout en
+  bout ; tout tient en Docker Compose sur une machine · Date : 01/11/2026
 
 ### Modules bonus
 

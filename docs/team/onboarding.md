@@ -32,6 +32,8 @@ Internet : c'est le relais qui va chercher les webhooks chez smee.io.
 | 008 | Modèle de données, Flyway, PostgreSQL de test (`compose-test.yml`), tests d'intégration | `docs/architecture/data-model.md` |
 | 009 | Règles métier `REG-01` et `REG-02`, 21 tests unitaires | `docs/architecture/business-rules.md` |
 | 010 | Job Multibranch `step-by-step`, webhook GitHub via relais smee.io | `docs/tooling/webhook-relay.md` |
+| 011-020 | CI complète, artefact Nexus, staging, production blue/green, Shared Library | `Jenkinsfile`, `docs/architecture/environments.md`, `pipeline-library/README.md` |
+| API | API REST `/api/tasks` sur les règles métier | `docs/architecture/api.md` |
 
 ## Tes stories
 

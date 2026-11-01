@@ -17,6 +17,7 @@ import com.esgi.stepbystep.service.exception.StepTooLongException;
 import com.esgi.stepbystep.service.exception.StepTooShortException;
 import com.esgi.stepbystep.service.exception.TaskNotFoundException;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,7 +43,7 @@ class TaskServiceTest {
     @Test
     void shouldAcceptStepOfExactly30Minutes() {
         Task task = new Task("Tidy the desk", 30);
-        when(tasks.findById(TASK_ID)).thenReturn(Optional.of(task));
+        when(tasks.findWithStepsById(TASK_ID)).thenReturn(Optional.of(task));
 
         TaskStep step = service.addStep(TASK_ID, "Clear the desk", 30);
 
@@ -61,7 +62,7 @@ class TaskServiceTest {
 
     @Test
     void shouldAcceptStepOfOneMinute() {
-        when(tasks.findById(TASK_ID)).thenReturn(Optional.of(new Task("Water the plants", 1)));
+        when(tasks.findWithStepsById(TASK_ID)).thenReturn(Optional.of(new Task("Water the plants", 1)));
 
         assertThat(service.addStep(TASK_ID, "Fill the watering can", 1).getEstimatedMinutes()).isEqualTo(1);
     }
@@ -74,10 +75,28 @@ class TaskServiceTest {
 
     @Test
     void shouldRejectStepOnUnknownTask() {
-        when(tasks.findById(TASK_ID)).thenReturn(Optional.empty());
+        when(tasks.findWithStepsById(TASK_ID)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.addStep(TASK_ID, "Make the call", 10))
                 .isInstanceOf(TaskNotFoundException.class);
+    }
+
+    // Reading
+
+    @Test
+    void shouldListTasksWithTheirSteps() {
+        Task task = new Task("Call the bank", 10);
+        when(tasks.findAllByOrderByIdAsc()).thenReturn(List.of(task));
+
+        assertThat(service.listTasks()).containsExactly(task);
+    }
+
+    @Test
+    void shouldGetATask() {
+        Task task = new Task("Call the bank", 10);
+        when(tasks.findWithStepsById(TASK_ID)).thenReturn(Optional.of(task));
+
+        assertThat(service.getTask(TASK_ID)).isSameAs(task);
     }
 
     // REG-02 — at most one unfinished task per day
@@ -125,7 +144,7 @@ class TaskServiceTest {
     @Test
     void shouldRejectPlanningOnOccupiedDate() {
         Task task = new Task("Book the dentist", 10);
-        when(tasks.findById(TASK_ID)).thenReturn(Optional.of(task));
+        when(tasks.findWithStepsById(TASK_ID)).thenReturn(Optional.of(task));
         when(tasks.existsByPlannedForAndStatusNotAndIdNot(MONDAY, TaskStatus.DONE, TASK_ID)).thenReturn(true);
 
         assertThatThrownBy(() -> service.planFor(TASK_ID, MONDAY)).isInstanceOf(AlreadyPlannedException.class);
@@ -135,7 +154,7 @@ class TaskServiceTest {
     @Test
     void shouldPlanOnFreeDate() {
         Task task = new Task("Book the dentist", 10);
-        when(tasks.findById(TASK_ID)).thenReturn(Optional.of(task));
+        when(tasks.findWithStepsById(TASK_ID)).thenReturn(Optional.of(task));
         when(tasks.existsByPlannedForAndStatusNotAndIdNot(MONDAY, TaskStatus.DONE, TASK_ID)).thenReturn(false);
 
         assertThat(service.planFor(TASK_ID, MONDAY).getPlannedFor()).isEqualTo(MONDAY);
@@ -145,7 +164,7 @@ class TaskServiceTest {
     void shouldRemoveTheDateOfATask() {
         Task task = new Task("Book the dentist", 10);
         task.setPlannedFor(MONDAY);
-        when(tasks.findById(TASK_ID)).thenReturn(Optional.of(task));
+        when(tasks.findWithStepsById(TASK_ID)).thenReturn(Optional.of(task));
 
         assertThat(service.planFor(TASK_ID, null).getPlannedFor()).isNull();
         verify(tasks, never()).existsByPlannedForAndStatusNotAndIdNot(any(), any(), any());
