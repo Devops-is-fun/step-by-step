@@ -77,6 +77,8 @@ services:
       JENKINS_AGENT_SSH_PUBKEY: "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOq1WWa9K2nlqA3+yNcBRgI+Hpa1Ew89UpfLa56/vPso docker-agent"
     volumes:
       - jenkins_agent_work:/home/jenkins/agent
+      # Maven cache kept across builds and agent rebuilds (module N1a: fast pipeline)
+      - jenkins_agent_m2:/home/jenkins/.m2
       - /var/run/docker.sock:/var/run/docker.sock
     restart: unless-stopped
     networks:
@@ -93,3 +95,4 @@ volumes:
   sonarqube_extensions:
   nexus_data:
   jenkins_agent_work:
+  jenkins_agent_m2:

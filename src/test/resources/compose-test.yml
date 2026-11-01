@@ -10,7 +10,8 @@ services:
       POSTGRES_USER: stepbystep
       POSTGRES_PASSWORD: test
     ports:
-      - "127.0.0.1:5433:5432"
+      # TEST_DB_PORT="" (empty) publishes a random port: the CI uses it so builds never clash on 5433
+      - "127.0.0.1:${TEST_DB_PORT-5433}:5432"
     tmpfs:
       - /var/lib/postgresql/data
     healthcheck:
