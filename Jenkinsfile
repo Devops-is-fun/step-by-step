@@ -66,7 +66,8 @@ pipeline {
             steps {
                 script {
                     // One throwaway PostgreSQL per build (EXG-COM-10): own Compose project, random host port
-                    def project = "stepbystep-ci-${env.BUILD_TAG}".toLowerCase().replaceAll('[^a-z0-9_-]', '-')
+                    // Kept short: the database container name must fit in a 63-character DNS label
+                    def project = "ci-${env.BUILD_NUMBER}-${env.BRANCH_NAME}".toLowerCase().replaceAll('[^a-z0-9_-]', '-').take(40)
                     withEnv(["COMPOSE_PROJECT_NAME=${project}", 'TEST_DB_PORT=']) {
                         try {
                             sh 'docker compose -f src/test/resources/compose-test.yml up -d --wait'
