@@ -15,6 +15,7 @@ METRICS = {
     "lead_time_hours": "dora_lead_time_hours",
     "change_lead_time_hours": "dora_change_lead_time_hours",
     "change_failure_rate": "dora_change_failure_rate",
+    "time_to_restore_hours": "dora_time_to_restore_hours",
 }
 
 

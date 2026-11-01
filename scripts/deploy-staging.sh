@@ -14,4 +14,5 @@ PROJECT="${PROJECT:-stepbystep-staging}"
 
 # --wait returns only when the database and the application are healthy (/actuator/health = UP)
 APP_VERSION="$VERSION" docker compose -p "$PROJECT" -f "$ROOT/environments/staging/docker-compose.yml" up -d --wait
+"$ROOT/scripts/connect-prometheus.sh" "$PROJECT"
 echo "OK  staging runs step-by-step:$VERSION"

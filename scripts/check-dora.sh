@@ -23,6 +23,7 @@ expected = [
     "lead_time_hours",
     "change_lead_time_hours",
     "change_failure_rate",
+    "time_to_restore_hours",
 ]
 
 if not csv_path.is_file():
@@ -61,7 +62,7 @@ for row in rows:
         if frequency < 0:
             raise ValueError()
 
-        for column in ("lead_time_hours", "change_lead_time_hours"):
+        for column in ("lead_time_hours", "change_lead_time_hours", "time_to_restore_hours"):
             if row[column]:
                 value = float(row[column])
                 if not 0 <= value < float("inf"):
