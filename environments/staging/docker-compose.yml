@@ -1,43 +1,42 @@
+# Staging stack (story 015): the candidate version, deployed automatically from main.
+# Values come from the environment set by scripts/deploy-staging.sh (Jenkins credential staging-db-creds).
 name: stepbystep-staging
 
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: stepbystep-staging-db
-    restart: unless-stopped
+  db:
+    image: postgres:16.15-alpine3.24
     environment:
-      POSTGRES_DB: stepbystep_staging
-      POSTGRES_USER: ${STAGING_DB_USER:?STAGING_DB_USER required}
-      POSTGRES_PASSWORD: ${STAGING_DB_PASSWORD:?STAGING_DB_PASSWORD required}
+      POSTGRES_DB: stepbystep
+      POSTGRES_USER: ${DB_USER:?DB_USER is not set}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is not set}
     volumes:
-      - staging_db_data:/var/lib/postgresql/data
+      - db_data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\"" ]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d stepbystep"]
       interval: 5s
-      timeout: 5s
-      retries: 15
-    networks:
-      - staging
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
 
   app:
-    image: step-by-step:${IMAGE_TAG:?IMAGE_TAG required}
-    container_name: stepbystep-staging-app
-    restart: unless-stopped
+    image: step-by-step:${APP_VERSION:?APP_VERSION is not set}
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/stepbystep
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+    depends_on:
+      db:
+        condition: service_healthy
     ports:
       - "127.0.0.1:8082:8080"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/stepbystep_staging
-      SPRING_DATASOURCE_USERNAME: ${STAGING_DB_USER:?STAGING_DB_USER required}
-      SPRING_DATASOURCE_PASSWORD: ${STAGING_DB_PASSWORD:?STAGING_DB_PASSWORD required}
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      - staging
-
-networks:
-  staging:
-    driver: bridge
+    healthcheck:
+      # No curl in the JRE image: bash asks /actuator/health through a raw TCP connection
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /actuator/health HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q UP <&3"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
+    restart: unless-stopped
 
 volumes:
-  staging_db_data:
+  db_data:

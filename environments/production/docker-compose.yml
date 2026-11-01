@@ -1,0 +1,61 @@
+# Production stack (stories 017-018, module N2a): two instances (blue, green) behind an nginx proxy.
+# scripts/deploy-production.sh deploys the new version on the idle colour, checks its health,
+# then switches the proxy; on failure the proxy stays on (or goes back to) the previous colour.
+name: stepbystep-production
+
+x-app: &app
+  environment:
+    SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/stepbystep
+    SPRING_DATASOURCE_USERNAME: ${DB_USER:?DB_USER is not set}
+    SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is not set}
+  depends_on:
+    db:
+      condition: service_healthy
+  healthcheck:
+    # No curl in the JRE image: bash asks /actuator/health through a raw TCP connection
+    test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8080 && printf 'GET /actuator/health HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q UP <&3"]
+    interval: 5s
+    timeout: 3s
+    retries: 12
+    start_period: 10s
+  restart: unless-stopped
+
+services:
+  db:
+    image: postgres:16.15-alpine3.24
+    environment:
+      POSTGRES_DB: stepbystep
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d stepbystep"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  app-blue:
+    <<: *app
+    image: step-by-step:${APP_BLUE_VERSION:-none}
+    ports:
+      - "127.0.0.1:8083:8080"
+
+  app-green:
+    <<: *app
+    image: step-by-step:${APP_GREEN_VERSION:-none}
+    ports:
+      - "127.0.0.1:8084:8080"
+
+  proxy:
+    image: step-by-step-proxy:1
+    volumes:
+      - proxy_upstream:/etc/nginx/upstream
+    ports:
+      - "127.0.0.1:8088:80"
+    restart: unless-stopped
+
+volumes:
+  db_data:
+  proxy_upstream:
