@@ -1,0 +1,43 @@
+name: stepbystep-staging
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: stepbystep-staging-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: stepbystep_staging
+      POSTGRES_USER: ${STAGING_DB_USER:?STAGING_DB_USER required}
+      POSTGRES_PASSWORD: ${STAGING_DB_PASSWORD:?STAGING_DB_PASSWORD required}
+    volumes:
+      - staging_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\"" ]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+    networks:
+      - staging
+
+  app:
+    image: step-by-step:${IMAGE_TAG:?IMAGE_TAG required}
+    container_name: stepbystep-staging-app
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8082:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/stepbystep_staging
+      SPRING_DATASOURCE_USERNAME: ${STAGING_DB_USER:?STAGING_DB_USER required}
+      SPRING_DATASOURCE_PASSWORD: ${STAGING_DB_PASSWORD:?STAGING_DB_PASSWORD required}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - staging
+
+networks:
+  staging:
+    driver: bridge
+
+volumes:
+  staging_db_data:
