@@ -4,7 +4,7 @@ Common pipeline steps of Step by Step, **versioned by Git tag** (`lib-v<major>.<
 The `Jenkinsfile` pins the version it uses:
 
 ```groovy
-@Library('step-by-step-lib@lib-v1.1.1') _
+@Library('step-by-step-lib@lib-v1.2.0') _
 ```
 
 ## Jenkins configuration
@@ -27,7 +27,7 @@ fine-grained GitHub token is enough. Its versions are independent from the appli
 | Step | What it does | Credentials |
 |------|--------------|-------------|
 | `integrationTests()` | throwaway PostgreSQL per build (Compose), agent joins its network, `./mvnw verify`, cleanup | — |
-| `publishToNexus(version)` | uploads the jar and a pom to `maven-releases`, skips an already published version | `nexus-deploy-creds` |
+| `publishToNexus(version, jarFile)` | uploads the jar and a pom to `maven-releases`, skips an already published version | `nexus-deploy-creds` |
 | `deployStaging(version)` | `scripts/deploy-staging.sh` | `staging-db-creds` |
 | `deployProduction(version)` | `scripts/deploy-production.sh` (blue/green, automatic rollback) | `production-db-creds` |
 | `notifyDiscord(version)` | posts the build result on Discord | `discord-webhook` |
@@ -39,6 +39,7 @@ fine-grained GitHub token is enough. Its versions are independent from the appli
 | `lib-v1.0.0` | first version: integration tests, Nexus publication, deployments, Discord |
 | `lib-v1.1.0` | `publishToNexus` finds the jar whatever the `pom.xml` version (release-please bumps it) |
 | `lib-v1.1.1` | `integrationTests` asks Docker for a free port (`TEST_DB_PORT=0`): Jenkins drops empty variables, so parallel builds clashed on 5433 |
+| `lib-v1.2.0` | `publishToNexus(version, jarFile)` publishes exactly the jar of the build: with several jars left in `target/`, 1.1.x could publish an old one |
 
 ## Releasing a new version
 
