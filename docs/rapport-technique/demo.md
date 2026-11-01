@@ -1,7 +1,8 @@
 # Script de la vidéo de démonstration
 
 Consigne du 01/11/2026 : la démonstration en direct est remplacée par **une vidéo** (moins de
-10 minutes), hébergée hors du dépôt. Lien : **[à compléter après le tournage]**.
+10 minutes), hébergée hors du dépôt, sur OneDrive : **[vidéo de démonstration](https://reseauges75-my.sharepoint.com/:f:/r/personal/g_rouy_myskolae_fr/Documents/Step%20by%20Step%20-%20DEMO?d=w3f8749ca9c3a4e7887fbc8d281c30769&csf=1&web=1&e=PclZux)**. Elle est
+sans son ; les commentaires sont dans [video-commentary.md](video-commentary.md).
 
 Outil : enregistreur d'écran de GNOME (touche `Impr. écran` → mode vidéo). Les attentes longues sont
 coupées au montage, avec la durée réelle affichée.

@@ -193,7 +193,7 @@ Ne jamais utiliser `docker compose down -v` pour un dépannage ordinaire : cela 
 ## 10. Liens et livrables
 
 - [Rapport technique](docs/rapport-technique/rapport.md) et [scénario de démonstration](docs/rapport-technique/demo.md).
-- [Vidéo de démonstration](docs/rapport-technique/demo.md) : consulter le scénario ; **ajouter ici le lien de la vidéo finale lorsqu'il sera disponible** (ne pas inventer une URL).
+- **[Vidéo de démonstration](https://reseauges75-my.sharepoint.com/:f:/r/personal/g_rouy_myskolae_fr/Documents/Step%20by%20Step%20-%20DEMO?d=w3f8749ca9c3a4e7887fbc8d281c30769&csf=1&web=1&e=PclZux)** (4 parties, sans son) : [script](docs/rapport-technique/demo.md) et [commentaires scène par scène](docs/rapport-technique/video-commentary.md).
 - [Spécification et organisation du binôme](docs/specification/specification.md).
 - [Architecture des environnements](docs/architecture/environments.md) ; [API REST](docs/architecture/api.md).
 - [Observabilité et métriques DORA](docs/observability/dora.md) ; [dashboard Grafana](observability/grafana/dashboards/dora.json).

@@ -74,7 +74,7 @@ then the Grafana dashboard "Step by Step - DORA".
 
 ## 6. Documentation
 
-[Technical report](docs/rapport-technique/rapport.md) · [Demo script](docs/rapport-technique/demo.md) ·
+**[Demo video](https://reseauges75-my.sharepoint.com/:f:/r/personal/g_rouy_myskolae_fr/Documents/Step%20by%20Step%20-%20DEMO?d=w3f8749ca9c3a4e7887fbc8d281c30769&csf=1&web=1&e=PclZux)** (4 parts, no sound) · [Technical report](docs/rapport-technique/rapport.md) · [Demo script](docs/rapport-technique/demo.md) ·
 [Environments](docs/architecture/environments.md) · [REST API](docs/architecture/api.md) ·
 [DORA](docs/observability/dora.md) · [Webhook relay](docs/tooling/webhook-relay.md) ·
 [Contributing](CONTRIBUTING.md)

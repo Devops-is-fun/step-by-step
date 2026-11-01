@@ -2,6 +2,7 @@
 
 > TP CI/CD avec Jenkins — ESGI Master 1. Binôme : Géraldine et Morgan.
 > Dépôt : `GeraldineRouy/step-by-step` (privé). Rendu du 01/11/2026.
+> [Vidéo de démonstration](https://reseauges75-my.sharepoint.com/:f:/r/personal/g_rouy_myskolae_fr/Documents/Step%20by%20Step%20-%20DEMO?d=w3f8749ca9c3a4e7887fbc8d281c30769&csf=1&web=1&e=PclZux) (sans son) et [ses commentaires](video-commentary.md).
 
 ## 1. Contexte et périmètre
 
@@ -125,7 +126,7 @@ Mesure du 01/11/2026 (semaine ISO 2026-W44) :
 
 | Métrique DORA | Valeur | Lecture |
 |---------------|--------|---------|
-| Fréquence de déploiement | **9** déploiements en production | chacun validé par `input` puis basculé en blue/green |
+| Fréquence de déploiement | **11** déploiements en production | chacun validé par `input` puis basculé en blue/green |
 | Délai de mise en production | **0,04 h** (≈ 2-3 min), commit → production, médiane | la chaîne elle-même est rapide ; le temps de relecture d'une PR n'est pas compté |
 | Taux d'échec des changements | **0 %** | aucun déploiement en production annulé : les erreurs ont été arrêtées **avant** (lint, tests, Quality Gate, voir section 6) |
 | Temps de restauration | **non mesurable** (aucun échec en production) | le retour arrière automatique a été testé hors Jenkins : une version cassée est refusée en ≈ 1 min, la production restant servie |
