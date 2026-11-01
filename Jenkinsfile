@@ -4,7 +4,7 @@
 // Common steps come from the Shared Library step-by-step-lib (pipeline-library/), pinned by tag (story 020).
 // Every stage runs on the docker-agent node, never on the controller.
 
-@Library('step-by-step-lib@lib-v1.1.0') _
+@Library('step-by-step-lib@lib-v1.1.1') _
 
 def APP_VERSION = ''
 

@@ -4,7 +4,7 @@ Common pipeline steps of Step by Step, **versioned by Git tag** (`lib-v<major>.<
 The `Jenkinsfile` pins the version it uses:
 
 ```groovy
-@Library('step-by-step-lib@lib-v1.1.0') _
+@Library('step-by-step-lib@lib-v1.1.1') _
 ```
 
 ## Jenkins configuration
@@ -38,6 +38,7 @@ fine-grained GitHub token is enough. Its versions are independent from the appli
 |-----|--------|
 | `lib-v1.0.0` | first version: integration tests, Nexus publication, deployments, Discord |
 | `lib-v1.1.0` | `publishToNexus` finds the jar whatever the `pom.xml` version (release-please bumps it) |
+| `lib-v1.1.1` | `integrationTests` asks Docker for a free port (`TEST_DB_PORT=0`): Jenkins drops empty variables, so parallel builds clashed on 5433 |
 
 ## Releasing a new version
 
