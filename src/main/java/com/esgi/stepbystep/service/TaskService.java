@@ -9,6 +9,7 @@ import com.esgi.stepbystep.service.exception.StepTooLongException;
 import com.esgi.stepbystep.service.exception.StepTooShortException;
 import com.esgi.stepbystep.service.exception.TaskNotFoundException;
 import java.time.LocalDate;
+import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +22,18 @@ public class TaskService {
 
     public TaskService(TaskRepository tasks) {
         this.tasks = tasks;
+    }
+
+    /** All tasks, oldest first. */
+    @Transactional(readOnly = true)
+    public List<Task> listTasks() {
+        return tasks.findAllByOrderByIdAsc();
+    }
+
+    /** One task with its steps. */
+    @Transactional(readOnly = true)
+    public Task getTask(Long taskId) {
+        return findTask(taskId);
     }
 
     /** Creates a task, optionally planned on a day (REG-02). */
@@ -59,6 +72,6 @@ public class TaskService {
     }
 
     private Task findTask(Long taskId) {
-        return tasks.findById(taskId).orElseThrow(() -> new TaskNotFoundException(taskId));
+        return tasks.findWithStepsById(taskId).orElseThrow(() -> new TaskNotFoundException(taskId));
     }
 }
