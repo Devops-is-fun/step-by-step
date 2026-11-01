@@ -61,7 +61,7 @@ rien de spécifique
 
 | Risque | Parade |
 |--------|--------|
-| Jenkins exposé par le tunnel ⇒ validation par un tiers | Restreindre l'accès au tunnel + authentification Jenkins |
+| Validation par un tiers | Jenkins n'est pas exposé à Internet (relais smee.io, story 010) ; `submitter` + authentification Jenkins |
 | Timeout de l'input | `timeout` explicite, avec conséquence documentée |
 | Rebuild silencieux en production | Vérification automatique du digest |
 

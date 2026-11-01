@@ -14,8 +14,8 @@ vierge, afin que je puisse évaluer le projet sans te poser de question.
 Le README contient, dans cet ordre :
 
 1. **Présentation** en trois phrases, et avertissement que le projet est solo.
-2. **Prérequis** : versions exactes (Docker Desktop, JDK 17, `docker compose` v2, tunnel Cloudflare).
-3. **Démarrage** : une commande pour l'outillage, une commande pour le tunnel, une commande pour l'app.
+2. **Prérequis** : versions exactes (Docker Desktop, JDK 17, `docker compose` v2, relais webhook smee.io).
+3. **Démarrage** : une commande pour l'outillage, une commande pour le relais webhook, une commande pour l'app.
 4. **Ordre des étapes** : la liste des 6 credentials à créer, avec l'ordre exact.
 5. **Ports** : le tableau complet (8080, 9000, 8081, 8082, 8088, 8083, 8084, 9090, 3000).
 6. **Démonstration de la chaîne** : la séquence de 8 commandes, de `git push` à `curl` production.
