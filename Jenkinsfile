@@ -1,5 +1,6 @@
 // Step by Step CI/CD pipeline.
 // CI (stories 011-014): secrets, lint, unit tests, integration tests, quality gate, versioned artefact in Nexus.
+// CD (stories 015-018), main only: staging, manual approval, blue/green production with automatic rollback.
 // Every stage runs on the docker-agent node, never on the controller.
 
 def APP_VERSION = ''
@@ -141,6 +142,39 @@ POM
                     }
                 }
                 archiveArtifacts artifacts: 'target/step-by-step-*.jar', fingerprint: true
+            }
+        }
+
+        stage('Deploy staging') {
+            when { branch 'main' }
+            steps {
+                // Automatic from main (story 016): the Nexus artefact, idempotent script
+                withCredentials([usernamePassword(credentialsId: 'staging-db-creds',
+                                                  usernameVariable: 'DB_USER', passwordVariable: 'DB_PASSWORD')]) {
+                    sh "./scripts/deploy-staging.sh ${APP_VERSION}"
+                }
+            }
+        }
+
+        stage('Approve production') {
+            when { branch 'main' }
+            steps {
+                // Manual validation (story 018): only the submitter can deploy the same artefact to production
+                timeout(time: 30, unit: 'MINUTES') {
+                    input message: "Deploy ${APP_VERSION} (already running in staging) to production?",
+                          ok: 'Deploy to production', submitter: 'admin'
+                }
+            }
+        }
+
+        stage('Deploy production') {
+            when { branch 'main' }
+            steps {
+                // Blue/green with health check and automatic rollback (story 017, module N2a)
+                withCredentials([usernamePassword(credentialsId: 'production-db-creds',
+                                                  usernameVariable: 'DB_USER', passwordVariable: 'DB_PASSWORD')]) {
+                    sh "./scripts/deploy-production.sh ${APP_VERSION}"
+                }
             }
         }
     }
