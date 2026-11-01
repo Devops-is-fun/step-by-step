@@ -63,3 +63,10 @@ exits with code 0, or exits with code 1 immediately if authentication fails, or 
 - CSRF protection (crumb) is enabled.
 - No password nor API token in the repository: only in a password manager.
 - The controller will be set to 0 executors in story 005, along with the agent.
+
+## 7. System settings
+
+| Setting | Value | Why |
+|---------|-------|-----|
+| Manage Jenkins -> System -> Quiet period | `0` | builds start as soon as the webhook event is processed |
+
