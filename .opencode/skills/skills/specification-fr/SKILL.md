@@ -11,7 +11,7 @@ description: Création itérative de la spécification du TP CI/CD à partir de 
 |---------|--------|
 | Nature du travail | TP du cours CI/CD (ESGI Master 1 « Information Architecture des Logiciels ») |
 | Énoncé de référence | `docs/Projet_CICD_Jenkins.pdf` — **source de vérité**, à lire intégralement |
-| Travail | **En solo.** L'exigence « en groupe / trinôme / quadrinôme » de l'énoncé est **ignorée** |
+| Travail | **En binôme** depuis le 01/11/2026 (solo jusqu'à la story 010). Répartition et règles d'usage de l'IA : spécification, « Organisation du binôme » |
 | Application web | **Java / Spring Boot**, build **Maven**, tests **JUnit 5** |
 | Outillage | Docker Compose : **Jenkins** (controller + agents), **SonarQube**, **Nexus** |
 | Environnements | **staging** et **production**, deux stacks **Docker Compose en local** |

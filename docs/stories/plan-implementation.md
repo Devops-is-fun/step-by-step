@@ -1,6 +1,7 @@
 # Plan d'implémentation — Projet CI/CD Jenkins
 
-> 31 stories : **27 au fil du périmètre principal**, **4 en bonus**. Toutes découlent de
+> 32 stories : **28 au fil du périmètre principal**, **4 en bonus**. Travail en **binôme** depuis le
+> 01/11/2026 : répartition dans la spécification, section « Organisation du binôme ». Toutes découlent de
 > `docs/specification/specification.md` ; chaque exigence `EXG-*` est couverte au moins une fois.
 
 ## Jalons
@@ -9,10 +10,10 @@
 |-------|---------|----------|-------------------|
 | **0 — Outillage** | 001 à 006 | Jenkins, SonarQube, Nexus, agent, dépôt Git | Les 3 services démarrent en une commande, un agent existe, le dépôt est propre |
 | **1 — Socle applicatif** | 007 à 009 | Application Spring Boot minimale **testable** | `./mvnw -B verify` vert, 4 tests unitaires sur `REG-01`/`REG-02` |
-| **1 — Intégration continue** | 010 à 014 | Webhook, Jenkinsfile, intégration, gate, artefact | Un push déclenche un build complet qui publie un artefact versionné |
+| **1 — Intégration continue** | 010 à 014, 032 | Webhook, accueil du binôme, Jenkinsfile, intégration, gate, artefact | Un push déclenche un build complet qui publie un artefact versionné |
 | **2 — Livraison continue** | 015 à 018 | Staging, blue/green, validation manuelle | Un push sur `main` atteint la **production** après validation, par bascule |
 | **3 — Modules et fiabilité** | 019 à 024 | Secrets, Shared Library, N1a, N1b, N3b | Couverture 60 %, build < 10 min, release taguée, DORA mesurées |
-| **4 — Rendus attendus** | 025 à 027 | README, rapport, soutenance | Une personne extérieure peut relancer la chaîne |
+| **4 — Rendus attendus** | 025 à 027 | README, rapport, vidéo de démonstration | Une personne extérieure peut relancer la chaîne |
 | **5 — Bonus** | 028 à 031 | App complète, Pomodoro, Flyway, tests de la lib | Uniquement si le jalon 4 est bouclé |
 
 ## Ordre d'exécution et dépendances
@@ -33,7 +34,10 @@
 015..024 ──► 025 ──► 026 ──► 027 ──► 028 ──► 029 / 030 / 031
 ```
 
-Contrainte de séquencement forte : **018 avant 027** (la démo de soutenance montre l'`input`), **013
+Parallélisme du binôme : après 010 → 032, l'étudiante enchaîne 011 → 014 pendant que le binôme
+fait 015 (staging), puis 017, 023, 024.
+
+Contrainte de séquencement forte : **018 avant 027** (la vidéo de démonstration montre l'`input`), **013
 avant 018** (on ne déploie que du code conforme), **019 avant 020** (la bibliothèque consomme des
 credentials).
 

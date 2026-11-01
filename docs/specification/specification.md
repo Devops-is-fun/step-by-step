@@ -1,6 +1,7 @@
 # Spécification — Projet CI/CD avec Jenkins
 
-> TP du cours CI/CD — ESGI Master 1 « Information Architecture des Logiciels ». **Travail solo.**
+> TP du cours CI/CD — ESGI Master 1 « Information Architecture des Logiciels ». **Travail en binôme**
+> (depuis le 01/11/2026 ; solo jusqu'à la story 010).
 > Énoncé : `docs/Projet_CICD_Jenkins.pdf` (extrait texte : `docs/specification/enonce.txt`)
 
 ## 1. Contexte et objectifs
@@ -27,8 +28,34 @@ l'application : celle-ci doit être réelle mais volontairement simple.
 
 | Module | Raison de l'écarter |
 |--------|---------------------|
-| `EXG-N2b-*` environnements éphémères | Le plus lourd : une stack Docker par pull request, sous-domaine, Playwright. Hors budget temps d'un travail solo |
+| `EXG-N2b-*` environnements éphémères | Le plus lourd : une stack Docker par pull request, sous-domaine, Playwright. Hors budget temps d'un binôme |
 | `EXG-N3a-*` environnements as Code | Terraform/OpenTofu et Ansible ne sont pas installés, et ce module est le plus long à construire **et** à maintenir |
+
+### Organisation du binôme (depuis le 01/11/2026)
+
+Principe : **Géraldine** porte ce qui se passe **dans Jenkins** (l'instance tourne sur sa machine) ;
+**Morgan** porte ce qui produit surtout **des fichiers**, testables sur sa propre copie de la stack.
+Chaque PR est relue par l'autre membre : chacun doit pouvoir expliquer toute la chaîne.
+
+| Géraldine | Morgan |
+|-----------|--------|
+| 001 à 014 (dont 010 à 014 : webhook, CI, intégration, gate, artefact) | 032 Accueil du binôme |
+| 016 Déploiement auto en staging | 015 Staging idempotent |
+| 018 Validation manuelle en production | 017 Blue/green — module **N2a** |
+| 019 Secrets, 020 Shared Library | 023 Releases automatisées — module **N1b** |
+| 021, 022 — module **N1a** | 024 Prometheus, Grafana, DORA — module **N3b** |
+| | 025 README |
+| **Ensemble :** 026 rapport technique, 027 vidéo de démonstration, relecture croisée des PR | |
+
+Usage de l'IA (Claude, ChatGPT) — l'énoncé autorise les outils hors cours « à condition de savoir
+les expliquer » :
+
+| Catégorie | Fichiers | Génération par IA |
+|-----------|----------|-------------------|
+| Code de l'application | `src/`, tests, dépendances applicatives du `pom.xml` | ✅ générée directement, puis vérifiée (tests verts, relecture) |
+| CI/CD | `Jenkinsfile`, Shared Library, `scripts/`, fichiers Compose, `Dockerfile`, nginx | 🟠 en mode guidé : chaque ligne comprise par son auteur, PR relue par l'autre membre |
+| Docs et rapport | `docs/tooling/`, README, rapport | 🟡 brouillon possible, réécrit avec ses propres mots |
+| Secrets | jetons, mots de passe, URL smee, credentials | ❌ jamais collés dans une IA ni dans un fichier |
 
 ## 3. Matrice de traçabilité — Exigences du TP
 
@@ -121,9 +148,10 @@ jusqu'à ce que toutes les cases « Critères de Done » de la story soient coch
 | `EXG-REND-01` | Dépôts Git | 006, 020 | ❌ |
 | `EXG-REND-02` | `README.md` permettant de tout relancer | 025 | ❌ |
 | `EXG-REND-03` | Rapport technique : architecture, choix, métriques DORA | 026 | ❌ |
-| `EXG-REND-04` | Soutenance : démo live d'un commit jusqu'à la production | 027 | ❌ |
-| `EXG-REND-05` | Soutenance : échec **volontaire** bloqué par le pipeline | 013, 021, 027 | ❌ |
-| `EXG-REND-06` | Capacité à expliquer l'intégralité de la chaîne | 027 | ❌ |
+| `EXG-REND-04` | Démonstration d'un commit jusqu'à la production — **en vidéo** (consigne du 01/11/2026 : plus de démo live) | 027 | ❌ |
+| `EXG-REND-05` | Échec **volontaire** bloqué par le pipeline — **en vidéo** | 013, 021, 027 | ❌ |
+| `EXG-REND-06` | Capacité de **chaque membre** à expliquer l'intégralité de la chaîne | 026, 027, 032 | ❌ |
+| `EXG-REND-07` | Doc qui justifie les choix et les décisions techniques (consigne du 01/11/2026) | 026 | ❌ |
 
 ### 3.9 Barème (sur 20)
 
@@ -143,12 +171,12 @@ jusqu'à ce que toutes les cases « Critères de Done » de la story soient coch
 | `EXG-BON-02` | Migrations expand/contract (Flyway ou Liquibase) sans interruption de service | ⏳ si temps | 030 |
 | `EXG-BON-03` | Tests de la Shared Library avec JenkinsPipelineUnit | ⏳ si temps | 031 |
 
-### 3.11 Contrainte écartée
+### 3.11 Composition de l'équipe
 
-L'énoncé impose un volume **par groupe** (« Trinôme : partie commune + 4 modules dont au moins 1 de
-niveau 3 »). Le travail est **solo** : cette contrainte de composition de groupe est écartée. Le
-volume cible reste partie commune + 4 modules dont 1 de niveau 3, l'équivalent solo du minimum
-trinôme.
+L'énoncé ne fixe le volume que pour un trinôme (partie commune + 4 modules dont au moins 1 de niveau
+3) et un quadrinôme. Le travail, d'abord solo, se fait **en binôme depuis le 01/11/2026** ; la règle
+donnée par le professeur pour un binôme est **partie commune + 4 modules dont au moins 1 de niveau
+3** : le périmètre N1a + N1b + N2a + N3b la respecte sans changement.
 
 ## 4. Spécification de l'application web
 
@@ -341,7 +369,8 @@ Contrôle systématique : la section `git status` avant chaque commit fait parti
 
 - **Décision :** périmètre des modules → **N1a + N1b + N2a + N3b** · Raison : 4 modules dont 1 de
   niveau 3 (équivalent solo de l'exigence trinôme) ; le blue/green tient en Docker Compose local et
-  les métriques DORA valent 3 points au barème · Date : 02/10/2026
+  les métriques DORA valent 3 points au barème · Date : 02/10/2026 · Confirmée le 01/11/2026 : c'est
+  aussi la règle du binôme
 - **Décision :** hébergement Git → **GitHub** · Raison : webhook et statut de PR natifs, dépôt
   privé gratuit — exigence de `EXG-COM-06` et `EXG-COM-07` · Date : 02/10/2026
 - **Décision :** versionnement automatique → **jreleaser** · Raison : lit les Conventional Commits et
@@ -473,6 +502,13 @@ Contrôle systématique : la section `git status` avant chaque commit fait parti
   `tasks-fr 010`) · Raison : un tunnel exposerait toute l'interface Jenkins à Internet, le relais ne
   transmet que les webhooks, signés par le secret partagé ; le scan quotidien reste le repli ·
   Date : 31/10/2026
+- **Décision :** passage en **binôme** et rendu sans démo live → partage des stories (section
+  « Organisation du binôme »), règles d'usage de l'IA par catégorie de fichiers, nouvelle story 032
+  (accueil du binôme : `CONTRIBUTING.md`, protection de `main`, visite guidée), vigile des secrets
+  lancé aussi par Jenkins (story 011), démonstration remplacée par **une vidéo** hors dépôt
+  (story 027) et rapport technique qui justifie les choix (story 026) · Raison : consignes du cours
+  modifiées le 01/11/2026 ; Jenkins reste sur la machine de l'étudiante, donc le binôme prend les
+  stories qui produisent surtout des fichiers · Date : 01/11/2026
 
 ### Modules bonus
 

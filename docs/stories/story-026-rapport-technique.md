@@ -22,7 +22,9 @@ Le rapport contient :
    limite honnête de l'échantillon.
 6. **Performance du pipeline** : avant/après, gains réels et échecs des optimisations tentées.
 7. **Écarts et compromis assumés** : module non retenu, relais smee.io plutôt qu'un tunnel, pour ne pas exposer Jenkins.
-8. **Ce que j'ai appris**, y compris les pannes rencontrées.
+8. **Ce que nous avons appris**, y compris les pannes rencontrées.
+9. **Organisation du binôme** : qui a fait quoi, comment les PR ont été relues, et comment l'IA a
+   été utilisée (règles de la spécification).
 
 ## Preuves attendues
 
@@ -34,7 +36,7 @@ Le rapport contient :
 
 ## Automatisation des tests
 
-`scripts/check-report.sh` : vérifie la présence des 8 sections, l'existence du fichier
+`scripts/check-report.sh` : vérifie la présence des 9 sections, l'existence du fichier
 `observability/dora/dora-metrics.csv` et du dashboard Grafana référencé, et l'absence de `[À_VALIDER]`
 ou de `[TODO]` dans le rapport.
 

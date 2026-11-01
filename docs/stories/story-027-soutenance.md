@@ -1,72 +1,83 @@
-# Story 027 — Préparer et répéter la soutenance
+# Story 027 — Tourner la vidéo de démonstration
 
 - **Jalon :** 4 — Rendus attendus
 - **Exigences couvertes :** `EXG-REND-04`, `EXG-REND-05`, `EXG-REND-06`
-- **Dépendances :** stories 013, 016, 018, 024
+- **Dépendances :** stories 013, 016, 018, 024, 026
+- **Qui :** le binôme, ensemble
+
+## Contexte
+
+Consigne du 01/11/2026 : il n'y a **plus de démonstration en direct**. Le rendu comprend une doc qui
+justifie les choix (story 026) et une **preuve visuelle** que la chaîne fonctionne : une **vidéo**
+(choix du binôme, sans captures d'écran dans le dépôt).
 
 ## Description
 
-En tant que candidate à la soutenance, je veux deux scénarios répétables — une réussite et un échec
-volontaire — et un argumentaire complet, afin de démontrer la chaîne en direct sans improvisation.
+En tant que jury, je veux une vidéo courte qui montre un commit aller jusqu'à la production, puis
+un échec volontaire bloqué par le pipeline, afin de constater que la chaîne fonctionne sans avoir à
+la relancer.
 
 ## Critères d'acceptation
 
-- **Scénario 1 — succès** (`EXG-REND-04`) : un commit sur `feature/*` → PR → merge `main` → webhook →
-  lint, tests, intégration, gate, artefact Nexus → staging automatique → validation manuelle →
-  bascule blue/green en production → `curl` production. Durée chronométrée et inférieure à 10 minutes
-  de build.
-- **Scénario 2 — échec volontaire** (`EXG-REND-05`) : un commit violant volontairement la Quality Gate,
-  ou la couverture, **bloque** le pipeline, et le non-déploiement est démontré (`docker images` inchangé,
-  staging toujours sur l'ancienne version).
-- **Argumentaire** (`EXG-REND-06`) : une réponse préparée pour chacune de ces questions probables :
-  pourquoi un agent et pas le controller, pourquoi jreleaser, comment fonctionne le rollback, d'où
-  viennent les métriques DORA, que se passe-t-il si SonarQube tombe, pourquoi un relais smee.io plutôt qu'un tunnel.
-- **Plan B** : captures d'écran et journaux de tout build réussi, au cas où le direct échoue.
-- La répétition est faite **au moins deux fois**, avec un chronomètre.
+- **Scénario 1 — succès** (`EXG-REND-04`) : une branche → PR (statut ✅ visible) → merge sur `main` →
+  webhook → lint, tests, intégration, Quality Gate, artefact Nexus → staging automatique →
+  validation manuelle (`input` avec `submitter`) → bascule blue/green en production → `curl`
+  production qui montre la nouvelle version.
+- **Scénario 2 — échec volontaire** (`EXG-REND-05`) : un commit qui viole la Quality Gate (ou la
+  couverture) **bloque** le pipeline ; la vidéo montre que staging est resté sur l'ancienne version.
+- La vidéo dure **moins de 10 minutes** ; les attentes longues sont coupées au montage et signalées
+  à l'écran (« build : 4 min 12 s »).
+- Chaque membre **commente** une partie de la chaîne qu'il n'a pas écrite (`EXG-REND-06`).
+- **Aucun secret à l'écran** : ni URL smee (page *Webhooks* de GitHub), ni jeton, ni page de
+  credential en édition, ni terminal où un secret serait affiché.
+- La vidéo est hébergée **hors du dépôt** (fichier trop lourd), avec un accès limité au jury ; son
+  lien figure dans le `README.md` et le rapport technique.
 
 ## Preuves attendues
 
 | Preuve | Where |
-|--------|------- |
-| Scénario 1 exécuté et minuté | `docs/rapport-technique/soutenance.md` |
-| Scénario 2 exécuté, build rouge | idem |
-| Questionnaire d'entraînement | section questions |
-| Plan B complet | dossier de captures |
+|--------|-------|
+| Vidéo de démonstration | lien dans `README.md` et dans le rapport |
+| Déroulé minuté des deux scénarios | `docs/rapport-technique/demo.md` |
+| Relecture « aucun secret à l'écran » faite par les deux membres | case cochée dans `demo.md` |
 
 ## Automatisation des tests
 
-Le scénario 2 est un test de bout en bout de la chaîne : le commit fautif doit être identifiable dans
-l'historique, et le staging doit être resté sur l'ancienne version. Consigner la sortie.
+Le scénario 2 est un test de bout en bout de la chaîne : le commit fautif est identifiable dans
+l'historique, et staging est resté sur l'ancienne version (sortie consignée dans `demo.md`).
 
 ## Documentation
 
-`docs/rapport-technique/soutenance.md` : déroulé minuté des deux scénarios, questions préparées,
-plan B.
+`docs/rapport-technique/demo.md` : déroulé des deux scénarios, durées réelles, commandes, lien vers
+la vidéo, et réponses courtes aux questions probables (pourquoi un agent et pas le controller,
+pourquoi jreleaser, comment fonctionne le retour arrière, d'où viennent les métriques DORA, que se
+passe-t-il si SonarQube tombe, pourquoi un relais smee.io plutôt qu'un tunnel).
 
 ## Fichiers à versionner
 
-- `docs/rapport-technique/soutenance.md`
-- `docs/rapport-technique/figures/soutenance/*.png`
+- `docs/rapport-technique/demo.md`
 
 ## Fichiers à ne jamais versionner
 
-Captures d'écran de sessions contenant des tokens
+La vidéo elle-même et ses rushes (trop lourds, et une image pourrait contenir un secret).
 
 ## Risques
 
 | Risque | Parade |
 |--------|--------|
-| Relais ou smee.io en panne pendant la soutenance | Plan B : captures, `docker restart cicd-webhook-relay`, ou *Scan Repository Now* |
-| Démo trop longue | Scénario 1 minuté, décisions de coupe listées |
-| Panne inconnue | Scénario 2 réglé à l'avance, donc maîtrisé |
+| Un secret apparaît dans une image | Relecture image par image par les deux membres avant publication ; recoupe ou floute |
+| Relais ou smee.io en panne pendant le tournage | `docker restart cicd-webhook-relay`, ou *Scan Repository Now* ; on retourne la prise |
+| Vidéo trop longue | Attentes coupées au montage, durées réelles affichées |
+| Outil d'enregistrement | Enregistreur d'écran intégré à GNOME (touche Impr. écran → mode vidéo), sans installation |
 
 ## Critères de Done
 
-- [ ] Scénario 1 minuté et exécuté
-- [ ] Scénario 2 exécuté avec build bloqué
-- [ ] 6 questions préparées avec réponse
-- [ ] Deux répétitions complètes
+- [ ] Scénario 1 filmé, de la PR à la production
+- [ ] Scénario 2 filmé, build bloqué et staging inchangé
+- [ ] Chaque membre commente une partie qu'il n'a pas écrite
+- [ ] Vidéo relue : aucun secret visible
+- [ ] Lien dans le README et le rapport
 
 ## Message de commit
 
-`docs(soutenance): add demo script for success and failure scenarios`
+`docs(demo): add demo script and video link`
