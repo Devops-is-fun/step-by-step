@@ -114,8 +114,25 @@ Jenkins** (et, pour ceux qu'un humain doit saisir, dans un gestionnaire de mots 
 
 ## 5. Métriques DORA
 
-> Section complétée par Morgan (story 024) : script de calcul depuis l'API Jenkins et `git log`,
-> tableau des 4 métriques, graphique Grafana, limite de l'échantillon.
+Chaîne de mesure (story 024, Morgan) : `scripts/dora-metrics.sh` lit l'API Jenkins (builds de `main`
+et leurs consoles) et `git log`, écrit `observability/dora/dora-metrics.csv` (une ligne par semaine
+ISO), un petit exporteur publie ce CSV pour **Prometheus**, et **Grafana** affiche le dashboard
+« Step by Step - DORA » (provisionné depuis le dépôt). Prometheus collecte aussi
+`/actuator/prometheus` du staging et des deux couleurs de la production. Détails et approximations :
+`docs/observability/dora.md`.
+
+Mesure du 01/11/2026 (semaine ISO 2026-W44) :
+
+| Métrique DORA | Valeur | Lecture |
+|---------------|--------|---------|
+| Fréquence de déploiement | **9** déploiements en production | chacun validé par `input` puis basculé en blue/green |
+| Délai de mise en production | **0,04 h** (≈ 2-3 min), commit → production, médiane | la chaîne elle-même est rapide ; le temps de relecture d'une PR n'est pas compté |
+| Taux d'échec des changements | **0 %** | aucun déploiement en production annulé : les erreurs ont été arrêtées **avant** (lint, tests, Quality Gate, voir section 6) |
+| Temps de restauration | **non mesurable** (aucun échec en production) | le retour arrière automatique a été testé hors Jenkins : une version cassée est refusée en ≈ 1 min, la production restant servie |
+
+**Limite honnête :** l'échantillon couvre une seule journée de mises en production. Ces valeurs
+montrent que la mesure est en place et automatisée, pas une performance durable ; elles
+deviendraient significatives sur plusieurs semaines, en relançant le script régulièrement.
 
 ## 6. Performance et fiabilité du pipeline
 
@@ -142,6 +159,7 @@ Ce qui rend le pipeline rapide :
 | Tests d'intégration en échec sur des branches au nom long | nom du conteneur de base > 63 caractères (limite DNS) | nom court `ci-<build>-<branche>` |
 | Deux builds simultanés en conflit | variable vide supprimée par Jenkins → port 5433 partagé | port `0` (Docker choisit un port libre), Shared Library `lib-v1.1.1` |
 | Webhook en `405` via smee | smee retire le `/` final de la cible | cible `…/github-webhook/?source=smee` |
+| Un ancien JAR publié et déployé sous une version neuve (`0.1.1-…`, `0.2.0-15f8354`) | après la release 0.1.1, `target/` contenait plusieurs JAR et la librairie prenait le premier | `mvn clean` au début de chaque build et publication du JAR exact du build (`lib-v1.2.0`) ; ces versions restent dans Nexus (immuables) mais ne sont plus déployées |
 
 ## 7. Écarts et compromis assumés
 
@@ -153,6 +171,7 @@ Ce qui rend le pipeline rapide :
 | Shared Library dans le dépôt applicatif | voir section 3 | versions par tag, épinglées dans le `Jenkinsfile` |
 | L'`input` de production garde un exécuteur de l'agent | `agent` global du pipeline | délai maximal de 30 min ; 2 exécuteurs sur l'agent |
 | SpotBugs non branché | temps | Checkstyle + Quality Gate SonarQube |
+| Prometheus rejoint les réseaux des stacks par script | les applications n'écoutent que sur `127.0.0.1` | `scripts/connect-prometheus.sh`, appelé à chaque déploiement |
 | Démonstration en vidéo | consigne du 01/11/2026 : plus de démo en direct | vidéo : commit → production, puis échec volontaire bloqué |
 
 ## 8. Ce que nous avons appris
@@ -163,6 +182,11 @@ Ce qui rend le pipeline rapide :
   n'en prenait qu'une.
 - Une version publiée ne se modifie jamais (Nexus, tags de la Shared Library) : on publie la suivante.
 - Les règles d'équipe doivent être **écrites** quand l'outil ne peut pas les imposer.
+- La façon de merger compte : en mélangeant *merge commit* et *squash*, le CHANGELOG généré par
+  release-please a listé certaines fonctionnalités deux ou trois fois. Règle retenue : **Squash and
+  merge**, un commit propre par PR.
+- Une métrique DORA se définit avant de se calculer : la première version comptait deux variantes
+  du délai de mise en production et oubliait le temps de restauration.
 
 ## 9. Organisation du binôme
 
