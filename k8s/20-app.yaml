@@ -1,0 +1,80 @@
+# Step by Step backend: 2 replicas, rolling update without downtime, probes on the actuator.
+apiVersion: v1
+kind: Service
+metadata:
+  name: app
+  namespace: step-by-step
+spec:
+  selector:
+    app: step-by-step
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: step-by-step
+  namespace: step-by-step
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: step-by-step
+  # Zero-downtime: one new pod is started and must be ready before an old one is stopped
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: step-by-step
+    spec:
+      containers:
+        - name: app
+          # Tag = commit SHA pushed by the CI (never "latest"): change it to deploy a new version
+          image: ghcr.io/devops-is-fun/step-by-step:dfb4e1bc3d469146c45cc4e23fd4a75cdfe81ce9
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://db:5432/stepbystep
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: db-credentials
+                  key: username
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-credentials
+                  key: password
+          # Spring Boot exposes these probe groups on its own when it runs on Kubernetes.
+          # startupProbe: up to 2 minutes to start (JVM + Flyway) before liveness may kill the pod
+          startupProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            periodSeconds: 5
+            failureThreshold: 24
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            periodSeconds: 10
+          # Receives traffic only when ready (database reachable included)
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            periodSeconds: 5
+          # Requests are also what the HorizontalPodAutoscaler will compute its CPU % from
+          resources:
+            requests:
+              cpu: 250m
+              memory: 384Mi
+            limits:
+              memory: 768Mi
