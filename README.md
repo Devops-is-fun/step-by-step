@@ -18,6 +18,7 @@ Step by Step est une application Java 17 / Spring Boot de gestion de tâches, ex
 8. [Règles métier](#8-règles-métier)
 9. [Dépannage](#9-dépannage)
 10. [Liens et livrables](#10-liens-et-livrables)
+11. [Déployer sur Kubernetes](#11-déployer-sur-kubernetes)
 
 ## 1. Présentation
 
@@ -200,3 +201,24 @@ Ne jamais utiliser `docker compose down -v` pour un dépannage ordinaire : cela 
 - [Configuration Jenkins](docs/tooling/jenkins-configuration.md), [SonarQube](docs/tooling/sonarqube.md), [Nexus](docs/tooling/nexus.md), [relais webhook](docs/tooling/webhook-relay.md).
 
 **Preuves à joindre avant de marquer la story Done :** relecture extérieure datée, sortie console d'une reproduction complète sur une installation propre, `scripts/check-readme.sh` réussi, lien vidéo final vérifié.
+
+## 11. Déployer sur Kubernetes
+
+Prérequis : `kubectl` connecté à un cluster (en local : `kind create cluster --name step-by-step`). Depuis la racine du dépôt :
+
+```bash
+# 1. Namespace, puis Secret de la base créé à la main (jamais versionné : le dépôt est public)
+kubectl apply -f k8s/00-namespace.yaml
+kubectl -n step-by-step create secret generic db-credentials \
+  --from-literal=username=stepbystep --from-literal=password='<mot-de-passe>'
+
+# 2. PostgreSQL + application (image ghcr.io/devops-is-fun/step-by-step:<sha du commit>)
+kubectl apply -f k8s/
+kubectl -n step-by-step get pods -w        # attendre db-0 et les 2 pods step-by-step en READY 1/1
+
+# 3. Accès temporaire, en attendant l'Ingress du cluster cible
+kubectl -n step-by-step port-forward svc/app 8085:80
+curl localhost:8085/actuator/health        # {"status":"UP",...}
+```
+
+Nouvelle version : `kubectl -n step-by-step set image deployment/step-by-step app=ghcr.io/devops-is-fun/step-by-step:<nouveau-sha>` (rolling update sans interruption).
