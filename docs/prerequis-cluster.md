@@ -100,6 +100,33 @@ Vérifier :
 kubectl get pods -n monitoring
 ```
 
+### Prérequis ServiceMonitor et ordre d'installation
+
+**Important :** le monitoring doit être installé avant d'appliquer les ressources `ServiceMonitor`.
+
+Le fichier `k8s/50-servicemonitor.yaml` définit une ressource personnalisée (`ServiceMonitor`) qui nécessite la CRD fournie par le Prometheus Operator, installé avec `kube-prometheus-stack`.
+
+Après l'installation du monitoring, vérifier que la CRD est disponible :
+
+```bash
+kubectl get crd servicemonitors.monitoring.coreos.com
+```
+
+La commande doit retourner la CRD `servicemonitors.monitoring.coreos.com`.
+
+**Ordre de déploiement recommandé :**
+
+1. Créer le cluster avec `scripts/setup-cluster.sh`.
+2. Installer ingress-nginx avec `scripts/install-ingress.sh`.
+3. Installer Prometheus et Grafana avec `scripts/install-monitoring.sh`, après avoir configuré le mot de passe administrateur.
+4. Créer le namespace `step-by-step` et le Secret PostgreSQL `db-credentials`.
+5. Déployer PostgreSQL et le backend Spring Boot.
+6. Appliquer `k8s/50-servicemonitor.yaml` lorsque ce fichier est disponible dans la branche utilisée.
+
+Les commandes de déploiement de PostgreSQL et du backend sont détaillées dans les sections 5 et 6.
+
+**Attention :** ne pas utiliser `kubectl apply -f k8s/` pour installer l'ensemble du répertoire. Celui-ci contient `values-monitoring.yaml`, qui est un fichier de configuration Helm et non un manifeste Kubernetes. Appliquer les fichiers Kubernetes individuellement, dans l'ordre indiqué.
+
 ### Accéder à Grafana
 
 Dans un terminal :
