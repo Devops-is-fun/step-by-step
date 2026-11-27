@@ -256,6 +256,26 @@ curl http://localhost:8085/actuator/health
 
 L'application doit retourner un statut `UP`.
 
+### Tester via l'Ingress (front + API)
+
+L'Ingress expose l'application sur les ports 80/443 de la machine (mapping de `scripts/kind-config.yaml`) :
+
+```bash
+curl -I http://localhost/            # frontend Vue (200, text/html)
+curl http://localhost/api/tasks      # API du backend (200, JSON)
+```
+
+L'application s'ouvre dans le navigateur sur <http://localhost/>. L'actuator n'est pas exposé par l'Ingress
+(seul `/api` est routé vers le backend).
+
+### Tester l'auto-scaling et le zéro-downtime
+
+```bash
+kubectl -n step-by-step get hpa,pods -w      # terminal 1
+./scripts/load-test.sh 3m                    # terminal 2 : charge k6, le HPA passe de 2 à 5 pods
+./scripts/test-resilience.sh                 # self-healing + rolling restart sous trafic (voir docs/tests-resilience.md)
+```
+
 ### Fonctionnement du GitOps
 
 Flux surveille la branche `main` et synchronise les manifestes Kubernetes toutes les minutes.
@@ -289,6 +309,8 @@ Les métriques comprennent notamment :
 Le dashboard **Step by Step - SRE Golden Signals** est provisionné automatiquement dans Grafana grâce à la ConfigMap `k8s/60-grafana-dashboard.yaml` et au sidecar Grafana.
 
 Flux applique automatiquement le ServiceMonitor et la ConfigMap du dashboard lors de la synchronisation du dossier `k8s/`.
+
+Mode d'emploi du dashboard (lecture des panneaux, scénario de démonstration, diagnostic) : [docs/observabilite.md](observabilite.md).
 
 ### Vérifier la collecte
 
