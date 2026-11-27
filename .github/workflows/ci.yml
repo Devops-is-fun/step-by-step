@@ -19,7 +19,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write # commit the new image tag in k8s/ (GitOps), from main only
       packages: write # push the image to GHCR with the automatic GITHUB_TOKEN
 
     # Throwaway PostgreSQL for the integration tests, on port 5433 like application-test.yml expects
@@ -90,3 +90,18 @@ jobs:
       - name: Push image
         if: github.ref == 'refs/heads/main'
         run: docker push --all-tags "$IMAGE"
+
+      # Continuous deployment (GitOps): the CI only writes the new tag in git, Flux (in the cluster)
+      # applies it. A commit pushed with GITHUB_TOKEN does not start a new workflow run: no loop.
+      - name: Deploy (update the image tag for Flux)
+        if: github.ref == 'refs/heads/main'
+        run: |
+          sed -i "s#image: $IMAGE:.*#image: $IMAGE:$GITHUB_SHA#" k8s/20-app.yaml
+          git diff --exit-code --quiet k8s/20-app.yaml && { echo "Tag already up to date"; exit 0; }
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add k8s/20-app.yaml
+          git commit -m "chore(deploy): step-by-step ${GITHUB_SHA::7}"
+          # main may have moved during the run: replay our commit on top before pushing
+          git pull --rebase origin main
+          git push origin HEAD:main
