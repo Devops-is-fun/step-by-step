@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import * as api from './api.js'
+import logo from './assets/logo.svg'
 
 // Données
 const tasks = ref([])
@@ -146,6 +147,7 @@ onMounted(loadTasks)
 <template>
   <main class="container">
     <header>
+      <img :src="logo" alt="Logo Step by Step" class="app-logo" />
       <h1>Step by Step</h1>
       <p>Un petit pas à la fois.</p>
     </header>
@@ -659,5 +661,16 @@ footer {
   .statistics {
     grid-template-columns: repeat(2, 1fr);
   }
+}
+
+.app-logo {
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  margin-bottom: 12px;
+}
+
+header {
+  text-align: center;
 }
 </style>
