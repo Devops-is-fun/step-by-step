@@ -13,7 +13,7 @@ The application exposes a small JSON API over the business rules of `TaskService
 | `DELETE` | `/api/tasks/{id}/steps/{stepId}` | — | `200` with the updated task; `400` if reopening it conflicts with `REG-02`; `404` if the step is missing or belongs to another task |
 | `DELETE` | `/api/tasks/{id}` | — | `204`; `404` if the task does not exist |
 | `PUT` | `/api/tasks/{id}/planned-for` | `{"plannedFor": "2026-11-02", "plannedTime": "09:30"}` or `null` | `200`; `400` if the day is taken (`REG-02`) or a time has no date |
-| `GET` | `/actuator/health` | — | `{"status":"UP", …}`, used by the pipeline and the blue/green switch |
+| `GET` | `/actuator/health` | — | `{"status":"UP", …}`, used by the Kubernetes probes (`/actuator/health/liveness`, `/readiness`); not exposed by the Ingress |
 
 Errors are always `{"error": "<message>"}`. A task is `DONE` when all its steps are done,
 `IN_PROGRESS` when at least one but not all are done, and `TODO` when none are done (including when

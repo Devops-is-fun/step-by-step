@@ -1,3 +1,7 @@
+> **Historique — projet CI/CD (octobre 2026).** Cette page décrit les anciens environnements Docker Compose
+> (Jenkins, Nexus, blue/green). Le déploiement actuel est sur Kubernetes avec Flux : voir le [README](../../README.md)
+> et le [dossier de projet](../dossier-projet.md).
+
 # Deployment environments
 
 Staging and production run on the same Docker host as the CI/CD tooling, as two Docker Compose stacks.
