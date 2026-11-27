@@ -202,9 +202,10 @@ Ne jamais utiliser `docker compose down -v` pour un dépannage ordinaire : cela 
 
 **Preuves à joindre avant de marquer la story Done :** relecture extérieure datée, sortie console d'une reproduction complète sur une installation propre, `scripts/check-readme.sh` réussi, lien vidéo final vérifié.
 
+
 ## 11. Déployer sur Kubernetes
 
-Le projet dispose d'un environnement Kubernetes local basé sur **kind**, avec metrics-server, ingress-nginx, Prometheus et Grafana.
+Le projet dispose d'un environnement Kubernetes local basé sur **kind**, avec metrics-server, ingress-nginx, Prometheus, Grafana et Flux.
 
 Le guide complet est disponible ici : **[Installation du cluster Kubernetes](docs/prerequis-cluster.md)**.
 
@@ -219,30 +220,51 @@ bash scripts/setup-cluster.sh
 # Installer ingress-nginx
 bash scripts/install-ingress.sh
 
+# Définir le mot de passe administrateur Grafana
+read -rsp "Mot de passe administrateur Grafana : " GRAFANA_ADMIN_PASSWORD
+echo
+export GRAFANA_ADMIN_PASSWORD
+
 # Installer Prometheus et Grafana
-# Nécessite le Secret administrateur Grafana :
-# voir docs/prerequis-cluster.md
 bash scripts/install-monitoring.sh
+
+unset GRAFANA_ADMIN_PASSWORD
 ```
 
-Pour déployer l'application, créer le namespace, puis le Secret PostgreSQL selon les instructions du guide, avant de déployer PostgreSQL et le backend.
+Créer ensuite le namespace :
 
 ```bash
 kubectl apply -f k8s/00-namespace.yaml
-
-# Créer le Secret db-credentials ici (voir le guide).
-
-kubectl apply -f k8s/10-postgres.yaml
-kubectl -n step-by-step rollout status statefulset/db --timeout=180s
-
-kubectl apply -f k8s/20-app.yaml
-kubectl -n step-by-step rollout status deployment/step-by-step --timeout=180s
 ```
 
-Vérification :
+Créer le Secret PostgreSQL `db-credentials` selon les instructions du guide d'installation.
+
+Les Secrets Kubernetes ne doivent jamais être versionnés dans Git.
+
+### Déploiement continu avec Flux (GitOps)
+
+Flux, installé dans le cluster, surveille la branche `main` du dépôt public et synchronise les manifestes du dossier `k8s/` toutes les minutes.
+
+Après l'installation du monitoring et la création du Secret PostgreSQL :
 
 ```bash
-kubectl get pods -n step-by-step
+bash scripts/install-flux.sh
+```
+
+Vérifier la synchronisation :
+
+```bash
+kubectl -n flux-system get gitrepositories,kustomizations
+kubectl -n step-by-step get pods
+```
+
+La Kustomization doit afficher `READY=True`.
+
+### Vérifier le backend
+
+Dans un premier terminal :
+
+```bash
 kubectl -n step-by-step port-forward svc/app 8085:80
 ```
 
@@ -252,11 +274,19 @@ Dans un second terminal :
 curl http://localhost:8085/actuator/health
 ```
 
-Pour mettre à jour l'image backend :
+Le backend doit retourner un statut `UP`.
 
-```bash
-kubectl -n step-by-step set image deployment/step-by-step \
-  app=ghcr.io/devops-is-fun/step-by-step:<nouveau-sha>
-```
+### Fonctionnement du déploiement continu
+
+Merge sur `main` → CI (tests, Hadolint, build Docker, Trivy) → publication GHCR → mise à jour automatique du tag dans `k8s/20-app.yaml` → synchronisation Flux → rolling update Kubernetes.
 
 Le Deployment utilise une stratégie RollingUpdate avec deux réplicas et des sondes de santé.
+
+### Précautions GitOps
+
+- Le dossier `k8s/` doit uniquement contenir des manifestes Kubernetes.
+- La configuration Helm du monitoring est située dans `scripts/values-monitoring.yaml`.
+- Le monitoring doit être installé avant Flux afin que la CRD ServiceMonitor soit disponible.
+- Avec `prune: true`, les ressources précédemment gérées par Flux et retirées de Git sont supprimées du cluster.
+- Les modifications des ressources gérées par Flux doivent être réalisées dans Git, et non directement avec kubectl.
+- Un retour arrière peut être effectué en restaurant dans Git le tag d'une image applicative précédente, puis en laissant Flux synchroniser le cluster.
