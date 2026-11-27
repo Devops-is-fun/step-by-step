@@ -1,0 +1,69 @@
+# Step by Step front (Vue, served by a non-root nginx on 8080). nginx forwards /api to the Service "app".
+apiVersion: v1
+kind: Service
+metadata:
+  name: front
+  namespace: step-by-step
+spec:
+  selector:
+    app: step-by-step-front
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: step-by-step-front
+  namespace: step-by-step
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: step-by-step-front
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: step-by-step-front
+    spec:
+      # Kubernetes refuses to start the pod if the image would run as root (nginx-unprivileged: UID 101)
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101
+      containers:
+        - name: front
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          # Tag = commit SHA, written by the "Front" workflow at each merge on main (Flux deploys it).
+          # "latest" only until the first run of that workflow.
+          image: ghcr.io/devops-is-fun/step-by-step-front:latest
+          ports:
+            - containerPort: 8080
+          env:
+            # Backend Service in the same namespace (default of the image, written here to be explicit)
+            - name: API_UPSTREAM
+              value: http://app:80
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 50m
+              memory: 32Mi
+            limits:
+              memory: 128Mi

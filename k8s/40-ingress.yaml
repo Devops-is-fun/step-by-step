@@ -1,0 +1,27 @@
+# Single entry point (ingress-nginx): / → front, /api → backend.
+# On kind, ports 80/443 of the machine reach the ingress (scripts/kind-config.yaml): http://localhost/
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: step-by-step
+  namespace: step-by-step
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          # Backend routes are already under /api/tasks: no rewrite needed
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: app
+                port:
+                  name: http
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: front
+                port:
+                  name: http

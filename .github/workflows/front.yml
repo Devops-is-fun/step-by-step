@@ -1,0 +1,90 @@
+name: Front
+
+# Runs only when the front changes: a Java change does not rebuild the front, and the other way round
+on:
+  push:
+    branches: [main]
+    paths: ["front/**", ".github/workflows/front.yml"]
+  pull_request:
+    paths: ["front/**", ".github/workflows/front.yml"]
+  workflow_dispatch:
+
+concurrency:
+  group: front-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # GHCR only accepts lowercase names
+  IMAGE: ghcr.io/devops-is-fun/step-by-step-front
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # commit the new image tag in k8s/ (GitOps), from main only
+      packages: write # push the image to GHCR with the automatic GITHUB_TOKEN
+    defaults:
+      run:
+        working-directory: front
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: front/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      # lint:ci = oxlint + eslint WITHOUT --fix: an error fails the pipeline instead of being fixed on the runner
+      - name: Lint
+        run: npm run lint:ci
+
+      - name: Tests
+        run: npm test
+
+      - name: Dockerfile lint
+        run: docker run --rm -i hadolint/hadolint:v2.15.1 < Dockerfile
+
+      # Multi-stage Dockerfile: the production build (npm run build) happens inside the image
+      - name: Build image
+        run: docker build -t "$IMAGE:$GITHUB_SHA" -t "$IMAGE:latest" .
+
+      - name: Vulnerability scan
+        run: >-
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock
+          ghcr.io/aquasecurity/trivy:0.76.1 image
+          --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --no-progress
+          "$IMAGE:$GITHUB_SHA"
+
+      - uses: docker/login-action@v3
+        if: github.ref == 'refs/heads/main'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push image
+        if: github.ref == 'refs/heads/main'
+        run: docker push --all-tags "$IMAGE"
+
+      # Continuous deployment (GitOps): write the new tag in git, Flux applies it in the cluster
+      - name: Deploy (update the image tag for Flux)
+        if: github.ref == 'refs/heads/main'
+        working-directory: .
+        run: |
+          sed -i "s#image: $IMAGE:.*#image: $IMAGE:$GITHUB_SHA#" k8s/30-front.yaml
+          git diff --exit-code --quiet k8s/30-front.yaml && { echo "Tag already up to date"; exit 0; }
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add k8s/30-front.yaml
+          git commit -m "chore(deploy): step-by-step-front ${GITHUB_SHA::7}"
+          # The backend workflow may push its own tag at the same time: rebase and retry
+          for attempt in 1 2 3; do
+            git pull --rebase origin main && git push origin HEAD:main && exit 0
+            sleep 5
+          done
+          exit 1
