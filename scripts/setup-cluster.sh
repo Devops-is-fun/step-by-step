@@ -5,6 +5,8 @@ set -euo pipefail
 CLUSTER_NAME="step-by-step"
 K8S_IMAGE="kindest/node:v1.31.4"
 METRICS_VERSION="v0.7.2"
+# Path computed from the script location: works whatever the current directory is
+KIND_CONFIG="$(dirname "$0")/kind-config.yaml"
 
 echo "=== Step by Step : installation du cluster ==="
 
@@ -30,7 +32,8 @@ else
     kind create cluster \
         --name "$CLUSTER_NAME" \
         --image "$K8S_IMAGE" \
-        --wait 180s
+        --wait 180s \
+        --config "$KIND_CONFIG"
 fi
 
 # Utiliser explicitement notre cluster
