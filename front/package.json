@@ -8,11 +8,12 @@
     "build": "vite build",
     "preview": "vite preview",
     "test:unit": "vitest",
-    "lint": "run-s \"lint:*\"",
+    "test": "vitest run",
+    "lint": "run-s lint:oxlint lint:eslint",
     "lint:oxlint": "oxlint . --fix",
     "lint:eslint": "eslint . --fix --cache",
-    "format": "prettier --write --experimental-cli src/",
-    "test": "vitest run"
+    "lint:ci": "oxlint . && eslint .",
+    "format": "prettier --write --experimental-cli src/"
   },
   "dependencies": {
     "axios": "^1.21.1",

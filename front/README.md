@@ -123,13 +123,20 @@ sans utiliser d'adresse absolue dans le code Vue.js.
 
 ## 7. Qualité du code et tests automatisés
 
-### Vérification du code
+### Vérification du code en local
 
-```bash
 npm run lint
-```
 
-ESLint et Oxlint permettent de vérifier la qualité du code.
+Cette commande vérifie et corrige automatiquement
+certaines erreurs de code.
+
+### Vérification du code en CI
+
+npm run lint:ci
+
+Cette commande vérifie la qualité du code sans
+modifier les fichiers sources.
+Elle est destinée au pipeline GitHub Actions.
 
 ### Exécution des tests
 
