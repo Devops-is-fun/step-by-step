@@ -204,21 +204,59 @@ Ne jamais utiliser `docker compose down -v` pour un dépannage ordinaire : cela 
 
 ## 11. Déployer sur Kubernetes
 
-Prérequis : `kubectl` connecté à un cluster (en local : `kind create cluster --name step-by-step`). Depuis la racine du dépôt :
+Le projet dispose d'un environnement Kubernetes local basé sur **kind**, avec metrics-server, ingress-nginx, Prometheus et Grafana.
+
+Le guide complet est disponible ici : **[Installation du cluster Kubernetes](docs/prerequis-cluster.md)**.
+
+### Démarrage rapide
+
+Depuis Git Bash, à la racine du dépôt :
 
 ```bash
-# 1. Namespace, puis Secret de la base créé à la main (jamais versionné : le dépôt est public)
-kubectl apply -f k8s/00-namespace.yaml
-kubectl -n step-by-step create secret generic db-credentials \
-  --from-literal=username=stepbystep --from-literal=password='<mot-de-passe>'
+# Créer le cluster et installer metrics-server
+bash scripts/setup-cluster.sh
 
-# 2. PostgreSQL + application (image ghcr.io/devops-is-fun/step-by-step:<sha du commit>)
-kubectl apply -f k8s/
-kubectl -n step-by-step get pods -w        # attendre db-0 et les 2 pods step-by-step en READY 1/1
+# Installer ingress-nginx
+bash scripts/install-ingress.sh
 
-# 3. Accès temporaire, en attendant l'Ingress du cluster cible
-kubectl -n step-by-step port-forward svc/app 8085:80
-curl localhost:8085/actuator/health        # {"status":"UP",...}
+# Installer Prometheus et Grafana
+# Nécessite le Secret administrateur Grafana :
+# voir docs/prerequis-cluster.md
+bash scripts/install-monitoring.sh
 ```
 
-Nouvelle version : `kubectl -n step-by-step set image deployment/step-by-step app=ghcr.io/devops-is-fun/step-by-step:<nouveau-sha>` (rolling update sans interruption).
+Pour déployer l'application, créer le namespace, puis le Secret PostgreSQL selon les instructions du guide, avant de déployer PostgreSQL et le backend.
+
+```bash
+kubectl apply -f k8s/00-namespace.yaml
+
+# Créer le Secret db-credentials ici (voir le guide).
+
+kubectl apply -f k8s/10-postgres.yaml
+kubectl -n step-by-step rollout status statefulset/db --timeout=180s
+
+kubectl apply -f k8s/20-app.yaml
+kubectl -n step-by-step rollout status deployment/step-by-step --timeout=180s
+```
+
+Vérification :
+
+```bash
+kubectl get pods -n step-by-step
+kubectl -n step-by-step port-forward svc/app 8085:80
+```
+
+Dans un second terminal :
+
+```bash
+curl http://localhost:8085/actuator/health
+```
+
+Pour mettre à jour l'image backend :
+
+```bash
+kubectl -n step-by-step set image deployment/step-by-step \
+  app=ghcr.io/devops-is-fun/step-by-step:<nouveau-sha>
+```
+
+Le Deployment utilise une stratégie RollingUpdate avec deux réplicas et des sondes de santé.
