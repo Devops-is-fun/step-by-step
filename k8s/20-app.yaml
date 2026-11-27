@@ -38,7 +38,7 @@ spec:
       containers:
         - name: app
           # Tag = commit SHA pushed by the CI (never "latest"): change it to deploy a new version
-          image: ghcr.io/devops-is-fun/step-by-step:dfb4e1bc3d469146c45cc4e23fd4a75cdfe81ce9
+          image: ghcr.io/devops-is-fun/step-by-step:052a704a8857ce92dd3a87288a2b58a63f74133c
           ports:
             - containerPort: 8080
           env:

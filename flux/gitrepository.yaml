@@ -1,0 +1,12 @@
+# Flux source: the public GitHub repository, branch main, polled every minute.
+# Public repository: Flux needs no token and no secret to read it.
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: step-by-step
+  namespace: flux-system
+spec:
+  interval: 1m
+  url: https://github.com/Devops-is-fun/step-by-step
+  ref:
+    branch: main
