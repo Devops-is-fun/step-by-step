@@ -2,7 +2,7 @@
 
 Ce guide explique comment installer et utiliser l'environnement Kubernetes local du projet **Step by Step**.
 
-L'environnement repose sur kind, ingress-nginx, metrics-server, Prometheus et Grafana.
+L'environnement repose sur kind, ingress-nginx, metrics-server, Prometheus, Grafana et Flux pour le déploiement continu GitOps.
 
 Il est destiné au développement et aux démonstrations. Il ne remplace pas l'environnement de production Kubernetes à deux machines virtuelles prévu par le projet DevOps.
 
@@ -14,11 +14,13 @@ Outils nécessaires :
 |---|---|
 | Docker Desktop | 27.5.1 |
 | kind | 0.33.0 |
-| kubectl | 1.31.4 |
+| kubectl | 1.37.x recommandé (à valider lors des tests) |
 | Helm | 4.3.2 |
 | Git Bash | Environnement Windows |
 
-La configuration locale utilise Kubernetes `kindest/node:v1.31.4`.
+La configuration locale utilise Kubernetes `kindest/node:v1.37.0`.
+
+L'image du nœud kind est épinglée par son digest SHA256 dans `scripts/setup-cluster.sh` afin de garantir la reproductibilité de l'installation.
 
 Prévoir environ 8 Go de mémoire disponibles pour Docker, selon les composants exécutés simultanément.
 
@@ -50,6 +52,10 @@ kubectl top nodes
 Le nœud doit être `Ready`. Les métriques CPU et mémoire peuvent prendre quelques secondes avant d'apparaître.
 
 L'option `--kubelet-insecure-tls` utilisée par metrics-server est réservée à cet environnement local.
+
+**Attention :** si un cluster `step-by-step` existe déjà avec une ancienne version de Kubernetes, le script ne met pas automatiquement à jour sa version.
+
+Une recréation du cluster peut être nécessaire. Sauvegarder les données PostgreSQL et les configurations nécessaires avant toute suppression.
 
 ## 3. Installation d'Ingress NGINX
 
@@ -114,18 +120,23 @@ kubectl get crd servicemonitors.monitoring.coreos.com
 
 La commande doit retourner la CRD `servicemonitors.monitoring.coreos.com`.
 
+
 **Ordre de déploiement recommandé :**
 
 1. Créer le cluster avec `scripts/setup-cluster.sh`.
 2. Installer ingress-nginx avec `scripts/install-ingress.sh`.
 3. Installer Prometheus et Grafana avec `scripts/install-monitoring.sh`, après avoir configuré le mot de passe administrateur.
-4. Créer le namespace `step-by-step` et le Secret PostgreSQL `db-credentials`.
-5. Déployer PostgreSQL et le backend Spring Boot.
-6. Appliquer `k8s/50-servicemonitor.yaml` lorsque ce fichier est disponible dans la branche utilisée.
+4. Vérifier la disponibilité de la CRD `ServiceMonitor`.
+5. Créer le namespace `step-by-step` et le Secret PostgreSQL `db-credentials`.
+6. Installer Flux avec `scripts/install-flux.sh`.
+7. Attendre la synchronisation des ressources Kubernetes.
+8. Vérifier le fonctionnement de PostgreSQL, du backend et du monitoring.
 
-Les commandes de déploiement de PostgreSQL et du backend sont détaillées dans les sections 5 et 6.
+Flux applique automatiquement les manifestes du dossier `k8s/` présents sur la branche `main`.
 
-**Attention :** ne pas utiliser `kubectl apply -f k8s/` pour installer l'ensemble du répertoire. Celui-ci contient `values-monitoring.yaml`, qui est un fichier de configuration Helm et non un manifeste Kubernetes. Appliquer les fichiers Kubernetes individuellement, dans l'ordre indiqué.
+Le fichier de configuration Helm `values-monitoring.yaml` est situé dans `scripts/`, afin que le répertoire `k8s/` contienne uniquement des manifestes Kubernetes.
+
+**Important :** installer le monitoring et vérifier la disponibilité de la CRD `ServiceMonitor` avant d'installer Flux.
 
 ### Accéder à Grafana
 
@@ -153,7 +164,7 @@ Ouvrir http://localhost:9090/targets.
 
 Certaines cibles internes du control plane peuvent être DOWN sur kind en raison de leurs interfaces d'écoute. Cela ne signifie pas nécessairement que le monitoring applicatif est défaillant.
 
-## 5. Déployer PostgreSQL
+## 5. Préparer le namespace et le Secret PostgreSQL
 
 Créer le namespace :
 
@@ -174,51 +185,89 @@ kubectl -n step-by-step create secret generic db-credentials \
 unset DB_PASSWORD
 ```
 
-Déployer PostgreSQL :
+Vérifier la présence du Secret PostgreSQL :
 
 ```bash
-kubectl apply -f k8s/10-postgres.yaml
+kubectl -n step-by-step get secret db-credentials
+```
+
+Le Secret doit être présent avant l'installation de Flux.
+
+PostgreSQL sera automatiquement déployé lors de la synchronisation des manifestes Kubernetes, décrite dans la section suivante.
+
+
+## 6. Déploiement continu avec Flux
+
+Flux assure la synchronisation automatique des manifestes Kubernetes présents dans le dossier `k8s/` de la branche `main`.
+
+### Prérequis
+
+Avant d'installer Flux, vérifier que :
+
+- Le cluster Kubernetes est opérationnel.
+- Prometheus et Grafana sont installés.
+- La CRD `ServiceMonitor` est disponible.
+- Le namespace `step-by-step` existe.
+- Le Secret PostgreSQL `db-credentials` est créé.
+
+### Installation
+
+Depuis la racine du dépôt :
+
+```bash
+bash scripts/install-flux.sh
+```
+
+### Vérifier la synchronisation
+
+```bash
+kubectl -n flux-system get gitrepositories
+kubectl -n flux-system get kustomizations
+```
+
+Les ressources doivent afficher un statut `READY=True`.
+
+Surveiller le déploiement de l'application :
+
+```bash
+kubectl -n step-by-step get pods -w
+```
+
+Attendre la disponibilité de PostgreSQL et du backend :
+
+```bash
 kubectl -n step-by-step rollout status statefulset/db --timeout=180s
-```
-
-Vérifier :
-
-```bash
-kubectl get pods -n step-by-step
-```
-
-Le pod `db-0` doit être `1/1 Running`.
-
-## 6. Déployer le backend Spring Boot
-
-```bash
-kubectl apply -f k8s/20-app.yaml
 kubectl -n step-by-step rollout status deployment/step-by-step --timeout=180s
 ```
 
-Vérifier :
-
-```bash
-kubectl get pods -n step-by-step
-```
-
-Le déploiement utilise deux réplicas Spring Boot, avec des sondes de santé et une stratégie RollingUpdate.
-
 ### Tester l'application
 
-Dans un terminal :
+Dans un premier terminal :
 
 ```bash
-kubectl -n step-by-step port-forward svc/app 8082:80
+kubectl -n step-by-step port-forward svc/app 8085:80
 ```
 
-Dans un autre terminal :
+Dans un second terminal :
 
 ```bash
-curl http://localhost:8082/actuator/health
+curl http://localhost:8085/actuator/health
 ```
 
-L'endpoint doit retourner un état `UP` lorsque l'application est saine.
+L'application doit retourner un statut `UP`.
+
+### Fonctionnement du GitOps
+
+Flux surveille la branche `main` et synchronise les manifestes Kubernetes toutes les minutes.
+
+Lorsqu'une nouvelle version du backend est publiée par la CI, le tag de l'image est mis à jour automatiquement dans `k8s/20-app.yaml`.
+
+Flux détecte cette modification et déclenche un rolling update du Deployment Kubernetes.
+
+Les modifications des ressources gérées par Flux doivent être réalisées dans Git afin de garantir la cohérence entre l'état déclaré et l'état réel du cluster.
+
+Avec `prune: true`, les ressources précédemment gérées par Flux et supprimées de Git sont également supprimées du cluster.
+
 
 ## 7. Observabilité applicative
 
@@ -226,7 +275,7 @@ Le backend expose les métriques Prometheus sur :
 
 `/actuator/prometheus`
 
-Un ServiceMonitor permet à Prometheus de collecter les métriques des réplicas Spring Boot lorsque la configuration correspondante est déployée.
+Le fichier `k8s/50-servicemonitor.yaml` configure la collecte des métriques des réplicas Spring Boot par Prometheus.
 
 Les métriques comprennent notamment :
 
@@ -235,11 +284,24 @@ Les métriques comprennent notamment :
 - La consommation CPU.
 - La consommation mémoire.
 - La disponibilité de la collecte.
-- La latence p95, lorsque les histogrammes Micrometer sont activés dans l'image déployée.
+- La latence p95, calculée à partir des histogrammes Micrometer.
 
-Le dashboard **Step by Step - SRE Golden Signals** est provisionné par une ConfigMap Kubernetes lorsque les manifests correspondants sont disponibles.
+Le dashboard **Step by Step - SRE Golden Signals** est provisionné automatiquement dans Grafana grâce à la ConfigMap `k8s/60-grafana-dashboard.yaml` et au sidecar Grafana.
 
-Les fichiers du dashboard et du ServiceMonitor font l'objet de PR séparées et doivent être fusionnés avant une installation entièrement reproductible de cette partie.
+Flux applique automatiquement le ServiceMonitor et la ConfigMap du dashboard lors de la synchronisation du dossier `k8s/`.
+
+### Vérifier la collecte
+
+```bash
+kubectl -n monitoring get servicemonitor
+kubectl -n monitoring get configmap -l grafana_dashboard=1
+```
+
+Dans Prometheus, ouvrir la page `/targets` et vérifier que les cibles du backend Spring Boot sont UP.
+
+Dans Grafana, ouvrir le dashboard **Step by Step - SRE Golden Signals** et générer quelques requêtes HTTP vers l'application afin d'alimenter les métriques.
+
+La présence effective des données doit être vérifiée après le déploiement de l'image applicative.
 
 ## 8. Commandes de diagnostic
 
@@ -286,6 +348,34 @@ kubectl top pods -n step-by-step
 | Grafana inaccessible | Vérifier le pod Grafana et le port-forward |
 | Métriques absentes | Vérifier `/actuator/prometheus` et les targets Prometheus |
 | Port 80 ou 443 occupé | Vérifier les applications et conteneurs utilisant ces ports |
+
+
+### Diagnostic Flux
+
+Vérifier les composants Flux :
+
+```bash
+kubectl get pods -n flux-system
+```
+
+Vérifier les sources Git :
+
+```bash
+kubectl -n flux-system get gitrepositories
+```
+
+Vérifier la synchronisation des manifestes :
+
+```bash
+kubectl -n flux-system get kustomizations
+```
+
+Consulter les logs des contrôleurs :
+
+```bash
+kubectl -n flux-system logs deployment/source-controller --tail=100
+kubectl -n flux-system logs deployment/kustomize-controller --tail=100
+```
 
 ## 9. Précautions
 
