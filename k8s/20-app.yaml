@@ -37,8 +37,17 @@ spec:
       labels:
         app: step-by-step
     spec:
+      # Room for the preStop pause + Spring Boot's graceful shutdown of the requests in progress
+      terminationGracePeriodSeconds: 45
       containers:
         - name: app
+          # Zero-downtime on stop: when a pod is deleted, Kubernetes removes it from the Service AND sends
+          # SIGTERM at the same time. Without this pause, the app could stop before every node has stopped
+          # sending it traffic (lost requests during a rolling update, seen with test-resilience.sh).
+          lifecycle:
+            preStop:
+              sleep:
+                seconds: 10
           # Tag = commit SHA pushed by the CI (never "latest"): change it to deploy a new version
           image: ghcr.io/devops-is-fun/step-by-step:8f78076b24f6f7219c0a502beb8a6d59c933f292
           ports:
