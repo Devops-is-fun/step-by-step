@@ -22,7 +22,7 @@ if [[ "$CONTEXT" != "kind-step-by-step" ]]; then
 fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-VALUES_FILE="${SCRIPT_DIR}/../k8s/values-monitoring.yaml"
+VALUES_FILE="${SCRIPT_DIR}/values-monitoring.yaml"
 
 echo "Configuration du dépôt Helm..."
 helm repo add prometheus-community \
