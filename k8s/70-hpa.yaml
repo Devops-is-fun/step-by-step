@@ -1,0 +1,28 @@
+# Auto-scaling of the backend on CPU (needs metrics-server in the cluster).
+# Target: 70 % of the CPU *request* of each pod (250m in 20-app.yaml), i.e. about 175m per pod.
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: step-by-step
+  namespace: step-by-step
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: step-by-step
+  minReplicas: 2 # never below 2: one pod can be replaced during a rolling update while the other serves
+  maxReplicas: 5 # kept small: the local kind cluster has a single node
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+  behavior:
+    # Scale up fast when the load arrives...
+    scaleUp:
+      stabilizationWindowSeconds: 0
+    # ...and scale down after 2 minutes of calm only (default is 5), to avoid yo-yo during the demo
+    scaleDown:
+      stabilizationWindowSeconds: 120
