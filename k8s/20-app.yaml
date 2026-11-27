@@ -1,4 +1,5 @@
-# Step by Step backend: 2 replicas, rolling update without downtime, probes on the actuator.
+# Step by Step backend: rolling update without downtime, probes on the actuator.
+# The number of replicas belongs to the HorizontalPodAutoscaler (70-hpa.yaml), not to this file.
 apiVersion: v1
 kind: Service
 metadata:
@@ -20,7 +21,8 @@ metadata:
   name: step-by-step
   namespace: step-by-step
 spec:
-  replicas: 2
+  # No "replicas" here on purpose: Flux re-applies this file every minute and would reset
+  # the number of pods chosen by the HPA (2 to 5, see 70-hpa.yaml)
   selector:
     matchLabels:
       app: step-by-step

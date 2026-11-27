@@ -237,3 +237,14 @@ Chaîne complète : merge sur `main` → CI (tests, image, Trivy, push GHCR) →
 - `k8s/` ne doit contenir **que des ressources Kubernetes** : Flux applique tout le dossier.
 - `prune: true` : une ressource retirée de `k8s/` est supprimée du cluster (seulement celles créées par Flux).
 - Une modification faite à la main avec `kubectl` est écrasée à la synchronisation suivante : on passe toujours par git. Retour arrière = `git revert` du commit `chore(deploy)`.
+
+### Auto-scaling (HPA) et test de charge
+
+`k8s/70-hpa.yaml` : de **2 à 5 pods** selon le CPU (cible 70 % de la request de 250m). Prérequis : metrics-server (`scripts/setup-cluster.sh`). Le Deployment ne fixe volontairement pas `replicas` : c'est le HPA qui décide (sinon Flux le remettrait à sa valeur toutes les minutes).
+
+```bash
+kubectl -n step-by-step get hpa,pods -w     # terminal 1 : suivre le scaling
+./scripts/load-test.sh 3m                   # terminal 2 : charge k6 depuis le cluster
+```
+
+Le test échoue si plus de 1 % des requêtes échouent : relancé pendant un rolling update, il sert aussi de preuve du zéro-downtime.
