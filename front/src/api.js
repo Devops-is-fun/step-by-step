@@ -17,3 +17,28 @@ export async function addStep(taskId, step) {
   )
   return response.data
 }
+
+export async function setStepDone(taskId, stepId, done) {
+  const response = await axios.put(
+    `/api/tasks/${taskId}/steps/${stepId}/done`,
+    { done }
+  )
+  return response.data
+}
+
+export async function deleteStep(taskId, stepId) {
+  const response = await axios.delete(`/api/tasks/${taskId}/steps/${stepId}`)
+  return response.data
+}
+
+export async function deleteTask(taskId) {
+  await axios.delete(`/api/tasks/${taskId}`)
+}
+
+export async function planTask(taskId, schedule) {
+  const response = await axios.put(
+    `/api/tasks/${taskId}/planned-for`,
+    schedule
+  )
+  return response.data
+}

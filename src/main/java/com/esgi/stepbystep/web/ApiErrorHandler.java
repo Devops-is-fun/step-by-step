@@ -2,6 +2,7 @@ package com.esgi.stepbystep.web;
 
 import com.esgi.stepbystep.service.exception.BusinessRuleException;
 import com.esgi.stepbystep.service.exception.TaskNotFoundException;
+import com.esgi.stepbystep.service.exception.TaskStepNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
@@ -21,9 +22,9 @@ public class ApiErrorHandler {
         return Map.of("error", exception.getMessage());
     }
 
-    @ExceptionHandler(TaskNotFoundException.class)
+    @ExceptionHandler({TaskNotFoundException.class, TaskStepNotFoundException.class})
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public Map<String, String> notFound(TaskNotFoundException exception) {
+    public Map<String, String> notFound(RuntimeException exception) {
         return Map.of("error", exception.getMessage());
     }
 
