@@ -1,0 +1,38 @@
+name: CodeQL
+
+# Security-oriented static analysis of the backend (Java) and the frontend (JavaScript / Vue).
+# Results appear in the "Security" tab of the repository (free for public repositories).
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "0 6 * * 1" # every Monday: new detection rules also apply to code that did not change
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write # publish the results in the Security tab
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [java-kotlin, javascript-typescript]
+    steps:
+      - uses: actions/checkout@v4
+
+      # build-mode "none": the source code is analysed without compiling it (no Maven build needed)
+      - uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+          queries: security-and-quality
+
+      - uses: github/codeql-action/analyze@v4
+        with:
+          category: /language:${{ matrix.language }}
