@@ -1,4 +1,3 @@
-
 controller:
   type: deployment
   replicas: 1
@@ -51,7 +50,27 @@ alloy:
 
       loki.source.kubernetes "pod_logs" {
         targets    = discovery.relabel.pod_logs.output
+        forward_to = [loki.process.levels.receiver]
+      }
+
+      // Severity as a "level" label, so that logs can be searched by level:
+      // {namespace="step-by-step", level="ERROR"}
+      loki.process "levels" {
         forward_to = [loki.write.local.receiver]
+
+        // Spring Boot: "2026-11-27T13:06:59.289Z  INFO 1 --- [...]"
+        stage.regex {
+          expression = `^\S+\s+(?P<level>TRACE|DEBUG|INFO|WARN|ERROR)\s`
+        }
+
+        // PostgreSQL: "... UTC [1] LOG:  ..." / "WARNING:" / "ERROR:" / "FATAL:" (PostgreSQL's own level names)
+        stage.regex {
+          expression = `\] (?P<level>LOG|INFO|NOTICE|WARNING|ERROR|FATAL|PANIC):`
+        }
+
+        stage.labels {
+          values = { level = "" }
+        }
       }
 
       loki.write "local" {

@@ -120,16 +120,34 @@ Utiliser le mode Code pour saisir les requêtes LogQL.
 {namespace="flux-system"}
 ```
 
-### Recherche des erreurs
+### Recherche par niveau de gravité
+
+Alloy extrait le niveau de chaque ligne (étape `loki.process "levels"` de `scripts/values-alloy.yaml`)
+et l'ajoute comme label **`level`** :
+
+| Source | Valeurs de `level` |
+|---|---|
+| Backend Spring Boot | `TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR` |
+| PostgreSQL | `LOG`, `INFO`, `NOTICE`, `WARNING`, `ERROR`, `FATAL`, `PANIC` (noms propres à PostgreSQL) |
+
+```logql
+{namespace="step-by-step", level="ERROR"}                      # erreurs de l'application
+{namespace="step-by-step", level=~"WARN|WARNING"}               # avertissements (Spring + PostgreSQL)
+{namespace="step-by-step", container="postgres", level=~"ERROR|FATAL"}
+```
+
+Dans Grafana Explore, le label `level` apparaît dans le *Label browser* : on combine service (`app`, `container`),
+date (sélecteur de période) et gravité sans écrire de requête.
+
+Vérifié sur kind (27/11) : un redémarrage de PostgreSQL produit des lignes `level="WARN"` côté backend
+(HikariPool) et `level="LOG"` côté PostgreSQL.
+
+### Recherche textuelle (lignes sans niveau)
+
+Les composants sans niveau reconnu (logs d'accès nginx, par exemple) restent cherchables par texte :
 
 ```logql
 {namespace="step-by-step"} |~ "(?i)error"
-```
-
-### Recherche des avertissements
-
-```logql
-{namespace="step-by-step"} |~ "(?i)warn"
 ```
 
 ### Exclusion des sondes Kubernetes
@@ -174,8 +192,8 @@ de Loki et Alloy était d'environ 5 016 Mio, soit 65 %.
 - La suppression du cluster peut entraîner la perte des logs.
 - Loki n'est pas exposé publiquement et ne possède pas
   de mécanisme d'authentification propre dans cette configuration.
-- Les filtres textuels ne remplacent pas une normalisation complète
-  des niveaux de gravité des logs.
+- Le niveau n'est extrait que pour les formats connus (Spring Boot, PostgreSQL) ;
+  les autres composants se cherchent par texte.
 - Ne jamais écrire de mots de passe ou de jetons dans les logs.
 - Le tracing distribué est hors périmètre, après échange avec le professeur.
 
