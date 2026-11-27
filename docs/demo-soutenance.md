@@ -41,8 +41,7 @@ git push -u origin demo/soutenance
 ## 3. Pendant la CI : la supervision (2 min)
 
 - Grafana : les 6 panneaux (latence p95, trafic, erreurs 5xx, CPU, mémoire, scrape) — voir [observabilite.md](observabilite.md).
-- Logs centralisés (Loki) dans Grafana : recherche par service, date, niveau. *(selon l'état de la PR de Morgan)*
-- Trace d'une requête front → back → base (OpenTelemetry). *(selon l'état de la PR de Morgan)*
+- Logs centralisés (Loki + Alloy) dans **Grafana → Explore**, source *Loki* : filtrer par `namespace="step-by-step"`, par pod / conteneur, par période, et rechercher les erreurs (voir `docs/logging.md`).
 
 ## 4. Le déploiement sans interruption (2 min)
 
@@ -104,7 +103,7 @@ kubectl -n step-by-step get hpa,pods -w     # terminal 2
 |---|---|---|
 | 1. Contexte, architecture | Géraldine | — |
 | 2. Chaîne CI | Géraldine | Géraldine |
-| 3. Supervision, logs, traces | Morgan | Morgan |
+| 3. Supervision et logs | Morgan | Morgan |
 | 4. Déploiement sans interruption | Géraldine | Morgan |
 | 5. Auto-scaling | Morgan | Géraldine |
 | 6. Résilience | Morgan | Morgan |
