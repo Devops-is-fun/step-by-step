@@ -29,6 +29,14 @@ if ! kubectl -n step-by-step get secret db-credentials >/dev/null 2>&1; then
     exit 1
 fi
 
+# Flux applies the whole k8s/ folder, which contains a ServiceMonitor: its CRD comes with the monitoring
+# stack. Without it, the synchronisation fails ("no matches for kind ServiceMonitor").
+if ! kubectl get crd servicemonitors.monitoring.coreos.com >/dev/null 2>&1; then
+    echo "ERREUR : la CRD ServiceMonitor est absente."
+    echo "Installer le monitoring d'abord : ./scripts/install-monitoring.sh"
+    exit 1
+fi
+
 echo "Installation des contrôleurs Flux..."
 kubectl apply -f "$FLUX_MANIFEST"
 
