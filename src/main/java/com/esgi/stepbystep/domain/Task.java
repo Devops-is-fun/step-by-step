@@ -19,6 +19,7 @@ import jakarta.validation.constraints.Size;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -53,6 +54,10 @@ public class Task {
     @Column(name = "planned_for")
     private LocalDate plannedFor;
 
+    /** Local start time of the planned task; optional. */
+    @Column(name = "planned_time")
+    private LocalTime plannedTime;
+
     /** Local date and time of the reminder; optional. */
     @Column(name = "reminder_at")
     private LocalDateTime reminderAt;
@@ -86,9 +91,31 @@ public class Task {
 
     /** Appends a step after the existing ones. */
     public TaskStep addStep(String label, int estimatedMinutes) {
-        TaskStep step = new TaskStep(this, label, estimatedMinutes, steps.size() + 1);
+        int nextPosition = steps.stream().mapToInt(TaskStep::getPosition).max().orElse(0) + 1;
+        TaskStep step = new TaskStep(this, label, estimatedMinutes, nextPosition);
         steps.add(step);
+        refreshStatusFromSteps();
         return step;
+    }
+
+    /** Removes a step and updates the task status without renumbering the remaining steps. */
+    public void removeStep(TaskStep step) {
+        if (!steps.remove(step)) {
+            throw new IllegalArgumentException("Step does not belong to this task");
+        }
+        refreshStatusFromSteps();
+    }
+
+    /** Keeps the persisted task status in sync with its steps; a task without steps is TODO. */
+    public void refreshStatusFromSteps() {
+        long completedSteps = steps.stream().filter(TaskStep::isDone).count();
+        if (completedSteps == steps.size() && !steps.isEmpty()) {
+            status = TaskStatus.DONE;
+        } else if (completedSteps > 0) {
+            status = TaskStatus.IN_PROGRESS;
+        } else {
+            status = TaskStatus.TODO;
+        }
     }
 
     public Long getId() {
@@ -125,6 +152,14 @@ public class Task {
 
     public void setPlannedFor(LocalDate plannedFor) {
         this.plannedFor = plannedFor;
+    }
+
+    public LocalTime getPlannedTime() {
+        return plannedTime;
+    }
+
+    public void setPlannedTime(LocalTime plannedTime) {
+        this.plannedTime = plannedTime;
     }
 
     public LocalDateTime getReminderAt() {

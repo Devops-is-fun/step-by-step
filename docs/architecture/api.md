@@ -7,12 +7,17 @@ The application exposes a small JSON API over the business rules of `TaskService
 |--------|------|------|--------|
 | `GET` | `/api/tasks` | — | `200`, all tasks with their steps |
 | `GET` | `/api/tasks/{id}` | — | `200`, or `404` |
-| `POST` | `/api/tasks` | `{"title", "estimatedMinutes", "plannedFor"?}` | `201`; `400` if the day already has an unfinished task (`REG-02`) |
+| `POST` | `/api/tasks` | `{"title", "estimatedMinutes", "plannedFor"?, "plannedTime"?}` | `201`; `400` if the day already has an unfinished task (`REG-02`) or a time has no date |
 | `POST` | `/api/tasks/{id}/steps` | `{"label", "estimatedMinutes"}` | `201` with the task; `400` if the step is outside 1-30 minutes (`REG-01`) |
-| `PUT` | `/api/tasks/{id}/planned-for` | `{"plannedFor": "2026-11-02"}` or `null` | `200`; `400` if the day is taken (`REG-02`) |
+| `PUT` | `/api/tasks/{id}/steps/{stepId}/done` | `{"done": true}` | `200` with the updated task; `400` if reopening it conflicts with `REG-02`; `404` if the step is missing or belongs to another task |
+| `DELETE` | `/api/tasks/{id}/steps/{stepId}` | — | `200` with the updated task; `400` if reopening it conflicts with `REG-02`; `404` if the step is missing or belongs to another task |
+| `DELETE` | `/api/tasks/{id}` | — | `204`; `404` if the task does not exist |
+| `PUT` | `/api/tasks/{id}/planned-for` | `{"plannedFor": "2026-11-02", "plannedTime": "09:30"}` or `null` | `200`; `400` if the day is taken (`REG-02`) or a time has no date |
 | `GET` | `/actuator/health` | — | `{"status":"UP", …}`, used by the pipeline and the blue/green switch |
 
-Errors are always `{"error": "<message>"}`.
+Errors are always `{"error": "<message>"}`. A task is `DONE` when all its steps are done,
+`IN_PROGRESS` when at least one but not all are done, and `TODO` when none are done (including when
+it has no steps).
 
 ## Try it (production, through the proxy)
 
@@ -34,7 +39,7 @@ Staging answers on `localhost:8082` with the same paths. Use the `id` returned b
 | Test | Kind |
 |------|------|
 | `TaskControllerTest` | unit (`@WebMvcTest`, service mocked): routes, JSON, error mapping |
-| `TaskServiceTest` | unit: business rules and reading |
+| `TaskServiceTest` | unit: business rules, status transitions, and reading |
 | `TaskRepositoryIT` | integration (PostgreSQL): persistence and the queries of `REG-02` |
 
 The API has no authentication: it is reachable only from the machine (`127.0.0.1`), like the tooling.

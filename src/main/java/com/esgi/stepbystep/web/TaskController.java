@@ -4,6 +4,7 @@ import com.esgi.stepbystep.service.TaskService;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -37,7 +38,8 @@ public class TaskController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public TaskResponse create(@Valid @RequestBody TaskRequests.CreateTask request) {
-        return TaskResponse.from(tasks.createTask(request.title(), request.estimatedMinutes(), request.plannedFor()));
+        return TaskResponse.from(tasks.createTask(
+                request.title(), request.estimatedMinutes(), request.plannedFor(), request.plannedTime()));
     }
 
     @PostMapping("/{id}/steps")
@@ -47,8 +49,25 @@ public class TaskController {
         return TaskResponse.from(tasks.getTask(id));
     }
 
+    @PutMapping("/{id}/steps/{stepId}/done")
+    public TaskResponse setStepDone(
+            @PathVariable Long id, @PathVariable Long stepId, @Valid @RequestBody TaskRequests.UpdateStepDone request) {
+        return TaskResponse.from(tasks.setStepDone(id, stepId, request.done()));
+    }
+
+    @DeleteMapping("/{id}/steps/{stepId}")
+    public TaskResponse deleteStep(@PathVariable Long id, @PathVariable Long stepId) {
+        return TaskResponse.from(tasks.deleteStep(id, stepId));
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteTask(@PathVariable Long id) {
+        tasks.deleteTask(id);
+    }
+
     @PutMapping("/{id}/planned-for")
     public TaskResponse plan(@PathVariable Long id, @RequestBody TaskRequests.PlanTask request) {
-        return TaskResponse.from(tasks.planFor(id, request.plannedFor()));
+        return TaskResponse.from(tasks.planFor(id, request.plannedFor(), request.plannedTime()));
     }
 }

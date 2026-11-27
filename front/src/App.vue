@@ -12,9 +12,13 @@ const loading = ref(false)
 const newTitle = ref('')
 const newMinutes = ref(60)
 const newDate = ref('')
+const newTime = ref('')
+const creatingTask = ref(false)
 
 // Formulaires des étapes
 const stepForms = ref({})
+const scheduleForms = ref({})
+const busyTaskIds = ref(new Set())
 
 // Statistiques
 const todoTasks = computed(() =>
@@ -62,6 +66,46 @@ function showError(err) {
     'Impossible de communiquer avec le serveur.'
 }
 
+function formatTime(time) {
+  return time ? time.slice(0, 5) : ''
+}
+
+function isTaskBusy(taskId) {
+  return busyTaskIds.value.has(taskId)
+}
+
+function setTaskBusy(taskId, busy) {
+  const taskIds = new Set(busyTaskIds.value)
+  if (busy) {
+    taskIds.add(taskId)
+  } else {
+    taskIds.delete(taskId)
+  }
+  busyTaskIds.value = taskIds
+}
+
+function replaceTask(updatedTask) {
+  const index = tasks.value.findIndex(task => task.id === updatedTask.id)
+  if (index === -1) return
+
+  tasks.value[index] = updatedTask
+  scheduleForms.value[updatedTask.id] = {
+    plannedFor: updatedTask.plannedFor || '',
+    plannedTime: formatTime(updatedTask.plannedTime),
+  }
+}
+
+function getScheduleForm(task) {
+  if (!scheduleForms.value[task.id]) {
+    scheduleForms.value[task.id] = {
+      plannedFor: task.plannedFor || '',
+      plannedTime: formatTime(task.plannedTime),
+    }
+  }
+
+  return scheduleForms.value[task.id]
+}
+
 // Récupérer les tâches
 async function loadTasks() {
   loading.value = true
@@ -81,6 +125,10 @@ async function createTask() {
   error.value = ''
 
   if (!newTitle.value.trim()) return
+  if (newTime.value && !newDate.value) {
+    error.value = 'Choisissez une date pour définir une heure de début.'
+    return
+  }
 
   const task = {
     title: newTitle.value.trim(),
@@ -90,17 +138,23 @@ async function createTask() {
   if (newDate.value) {
     task.plannedFor = newDate.value
   }
+  if (newTime.value) {
+    task.plannedTime = newTime.value
+  }
 
+  creatingTask.value = true
   try {
-    await api.createTask(task)
+    const createdTask = await api.createTask(task)
+    tasks.value = [...tasks.value, createdTask]
 
     newTitle.value = ''
     newMinutes.value = 60
     newDate.value = ''
-
-    await loadTasks()
+    newTime.value = ''
   } catch (err) {
     showError(err)
+  } finally {
+    creatingTask.value = false
   }
 }
 
@@ -119,23 +173,96 @@ function getStepForm(taskId) {
 // Ajouter une étape
 async function addStep(task) {
   error.value = ''
+  if (isTaskBusy(task.id)) return
 
   const form = getStepForm(task.id)
 
   if (!form.label.trim()) return
 
+  setTaskBusy(task.id, true)
   try {
-    await api.addStep(task.id, {
+    const updatedTask = await api.addStep(task.id, {
       label: form.label.trim(),
       estimatedMinutes: Number(form.estimatedMinutes)
     })
 
+    replaceTask(updatedTask)
     form.label = ''
     form.estimatedMinutes = 15
-
-    await loadTasks()
   } catch (err) {
     showError(err)
+  } finally {
+    setTaskBusy(task.id, false)
+  }
+}
+
+async function toggleStep(task, step, done) {
+  error.value = ''
+  if (isTaskBusy(task.id)) return
+
+  setTaskBusy(task.id, true)
+  try {
+    replaceTask(await api.setStepDone(task.id, step.id, done))
+  } catch (err) {
+    showError(err)
+  } finally {
+    setTaskBusy(task.id, false)
+  }
+}
+
+async function removeStep(task, step) {
+  if (!window.confirm(`Supprimer l’étape « ${step.label} » ?`)) return
+  error.value = ''
+  if (isTaskBusy(task.id)) return
+
+  setTaskBusy(task.id, true)
+  try {
+    replaceTask(await api.deleteStep(task.id, step.id))
+  } catch (err) {
+    showError(err)
+  } finally {
+    setTaskBusy(task.id, false)
+  }
+}
+
+async function removeTask(task) {
+  if (!window.confirm(`Supprimer la tâche « ${task.title} » et ses étapes ?`)) return
+  error.value = ''
+  if (isTaskBusy(task.id)) return
+
+  setTaskBusy(task.id, true)
+  try {
+    await api.deleteTask(task.id)
+    tasks.value = tasks.value.filter(current => current.id !== task.id)
+    delete scheduleForms.value[task.id]
+    delete stepForms.value[task.id]
+  } catch (err) {
+    showError(err)
+  } finally {
+    setTaskBusy(task.id, false)
+  }
+}
+
+async function saveSchedule(task) {
+  error.value = ''
+  if (isTaskBusy(task.id)) return
+
+  const form = getScheduleForm(task)
+  if (form.plannedTime && !form.plannedFor) {
+    error.value = 'Choisissez une date pour définir une heure de début.'
+    return
+  }
+
+  setTaskBusy(task.id, true)
+  try {
+    replaceTask(await api.planTask(task.id, {
+      plannedFor: form.plannedFor || null,
+      plannedTime: form.plannedTime || null,
+    }))
+  } catch (err) {
+    showError(err)
+  } finally {
+    setTaskBusy(task.id, false)
   }
 }
 
@@ -197,10 +324,21 @@ onMounted(loadTasks)
               type="date"
             />
           </div>
+          <div class="form-group">
+            <label for="planned-time">
+              Heure de début (facultative)
+            </label>
+            <input
+              id="planned-time"
+              v-model="newTime"
+              type="time"
+              :required="!!newTime"
+            />
+          </div>
         </div>
 
-        <button type="submit">
-          + Créer la tâche
+        <button type="submit" :disabled="creatingTask">
+          {{ creatingTask ? 'Création…' : '+ Créer la tâche' }}
         </button>
       </form>
     </section>
@@ -270,14 +408,25 @@ onMounted(loadTasks)
       <div class="task-header">
         <h3>{{ task.title }}</h3>
 
-        <span class="status" :class="task.status">
-          {{ statusLabels[task.status] }}
-        </span>
+        <div class="task-actions">
+          <span class="status" :class="task.status">
+            {{ statusLabels[task.status] }}
+          </span>
+          <button
+            class="delete-button"
+            type="button"
+            :aria-label="'Supprimer la tâche ' + task.title"
+            :disabled="isTaskBusy(task.id)"
+            @click="removeTask(task)"
+          >
+            Supprimer
+          </button>
+        </div>
       </div>
 
       <p class="task-info">
-        {{ task.estimatedMinutes }} min ·
-        {{ task.plannedFor || 'Non planifiée' }}
+        {{ task.estimatedMinutes }} min · {{ task.plannedFor || 'Non planifiée' }}
+        <span v-if="task.plannedTime">à {{ formatTime(task.plannedTime) }}</span>
       </p>
 
       <!-- Progression de la tâche -->
@@ -311,16 +460,62 @@ onMounted(loadTasks)
           v-for="step in task.steps"
           :key="step.id"
         >
-          <span :class="{ completed: step.done }">
-            {{ step.done ? '✓' : '○' }}
-            {{ step.label }}
-          </span>
+          <label class="step-label" :class="{ completed: step.done }">
+            <input
+              type="checkbox"
+              :checked="step.done"
+              :aria-label="'Terminer ' + step.label"
+              :disabled="isTaskBusy(task.id)"
+              @change="toggleStep(task, step, $event.target.checked)"
+            />
+            <span>{{ step.label }}</span>
+          </label>
 
-          <span class="duration">
-            {{ step.estimatedMinutes }} min
-          </span>
+          <div class="step-actions">
+            <span class="duration">
+              {{ step.estimatedMinutes }} min
+            </span>
+            <button
+              class="delete-button"
+              type="button"
+              :aria-label="'Supprimer l’étape ' + step.label"
+              :disabled="isTaskBusy(task.id)"
+              @click="removeStep(task, step)"
+            >
+              Supprimer
+            </button>
+          </div>
         </li>
       </ul>
+
+      <form class="schedule-form" @submit.prevent="saveSchedule(task)">
+        <h4>Planifier la tâche</h4>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label :for="'schedule-date-' + task.id">Date prévue</label>
+            <input
+              :id="'schedule-date-' + task.id"
+              v-model="getScheduleForm(task).plannedFor"
+              type="date"
+              :disabled="isTaskBusy(task.id)"
+            />
+          </div>
+          <div class="form-group">
+            <label :for="'schedule-time-' + task.id">Heure de début</label>
+            <input
+              :id="'schedule-time-' + task.id"
+              v-model="getScheduleForm(task).plannedTime"
+              type="time"
+              :disabled="isTaskBusy(task.id)"
+            />
+          </div>
+        </div>
+
+        <button type="submit" :disabled="isTaskBusy(task.id)">
+          {{ isTaskBusy(task.id) ? 'Enregistrement…' : 'Enregistrer la planification' }}
+        </button>
+      </form>
 
       <!-- Ajouter une étape -->
       <form
@@ -353,8 +548,8 @@ onMounted(loadTasks)
           required
         />
 
-        <button type="submit">
-          + Ajouter une étape
+        <button type="submit" :disabled="isTaskBusy(task.id)">
+          {{ isTaskBusy(task.id) ? 'Enregistrement…' : '+ Ajouter une étape' }}
         </button>
       </form>
     </article>
@@ -438,6 +633,13 @@ header p,
   margin: 0;
 }
 
+.task-actions,
+.step-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .task-info {
   font-size: 14px;
   color: #68786c;
@@ -494,11 +696,24 @@ header p,
 
 .steps li {
   display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
   padding: 12px 0;
   border-bottom: 1px solid #edf0ed;
   font-size: 14px;
+}
+
+.step-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.step-label input {
+  flex: 0 0 auto;
+  margin: 0;
 }
 
 .completed {
@@ -509,6 +724,21 @@ header p,
 .duration {
   color: #68786c;
   white-space: nowrap;
+}
+
+.delete-button {
+  padding: 6px 9px;
+  border: 1px solid #d88a84;
+  border-radius: 6px;
+  background: white;
+  color: #a33b32;
+  cursor: pointer;
+}
+
+.delete-button:disabled,
+button:disabled {
+  cursor: wait;
+  opacity: 0.65;
 }
 
 footer {
@@ -534,6 +764,35 @@ footer {
   margin-top: 20px;
   padding-top: 16px;
   border-top: 1px solid #dfe7dd;
+}
+
+.schedule-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #dfe7dd;
+}
+
+.schedule-form h4 {
+  margin: 0;
+}
+
+.schedule-form input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #dfe7dd;
+  border-radius: 8px;
+}
+
+.schedule-form button {
+  background: #48765c;
+  color: white;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
 }
 
 .step-form h4 {
@@ -586,6 +845,10 @@ footer {
   gap: 16px;
 }
 
+.create-task .form-row {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .create-task label {
   font-size: 14px;
   font-weight: 500;
@@ -622,6 +885,10 @@ footer {
 
 @media (max-width: 600px) {
   .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .create-task .form-row {
     grid-template-columns: 1fr;
   }
 }

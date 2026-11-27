@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -31,6 +32,7 @@ class TaskRepositoryIT {
     void savesATaskAndReadsItsStepsBackInOrder() {
         Task task = new Task("Call the property manager", 25);
         task.setPlannedFor(LocalDate.of(2026, 11, 2));
+        task.setPlannedTime(LocalTime.of(9, 30));
         task.addStep("Find the phone number", 5);
         task.addStep("Write down the questions", 10);
         task.addStep("Make the call", 10);
@@ -43,6 +45,7 @@ class TaskRepositoryIT {
         assertThat(found.getTitle()).isEqualTo("Call the property manager");
         assertThat(found.getStatus()).isEqualTo(TaskStatus.TODO);
         assertThat(found.getPlannedFor()).isEqualTo(LocalDate.of(2026, 11, 2));
+        assertThat(found.getPlannedTime()).isEqualTo(LocalTime.of(9, 30));
         assertThat(found.getReminderAt()).isNull();
         assertThat(found.getCreatedAt()).isNotNull();
         assertThat(found.getSteps())
@@ -55,6 +58,8 @@ class TaskRepositoryIT {
         Task task = new Task("Tidy the desk", 15);
         task.addStep("Clear the desk", 15);
         Long id = tasks.save(task).getId();
+        notifications.save(new NotificationLog(
+                task, NotificationChannel.IN_APP, Instant.parse("2026-11-02T08:00:00Z"), true));
         entityManager.flush();
         entityManager.clear();
 
@@ -66,7 +71,9 @@ class TaskRepositoryIT {
 
         tasks.deleteById(id);
         entityManager.flush();
+        entityManager.clear();
         assertThat(tasks.findById(id)).isEmpty();
+        assertThat(notifications.findByTaskIdOrderBySentAtAsc(id)).isEmpty();
         assertThat(entityManager.getEntityManager()
                         .createQuery("select count(s) from TaskStep s", Long.class)
                         .getSingleResult())
@@ -84,6 +91,23 @@ class TaskRepositoryIT {
                     entityManager.flush();
                 })
                 .hasMessageContaining("uk_task_step_position");
+    }
+
+    @Test
+    void appendsAfterTheHighestPersistedStepPosition() {
+        Task task = new Task("Plan the week", 20);
+        task.addStep("List the appointments", 5);
+        TaskStep removed = task.addStep("Pick the priorities", 5);
+        task.addStep("Block the time", 5);
+        task.removeStep(removed);
+        task.addStep("Review the plan", 5);
+        Long id = tasks.save(task).getId();
+        entityManager.flush();
+        entityManager.clear();
+
+        Task saved = tasks.findWithStepsById(id).orElseThrow();
+
+        assertThat(saved.getSteps()).extracting(TaskStep::getPosition).containsExactly(1, 3, 4);
     }
 
     @Test
