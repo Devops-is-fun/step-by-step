@@ -4,6 +4,8 @@ kind: Service
 metadata:
   name: app
   namespace: step-by-step
+  labels:
+    monitoring: enabled
 spec:
   selector:
     app: step-by-step
