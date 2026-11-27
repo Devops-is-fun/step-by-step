@@ -126,6 +126,7 @@ La commande doit retourner la CRD `servicemonitors.monitoring.coreos.com`.
 1. Créer le cluster avec `scripts/setup-cluster.sh`.
 2. Installer ingress-nginx avec `scripts/install-ingress.sh`.
 3. Installer Prometheus et Grafana avec `scripts/install-monitoring.sh`, après avoir configuré le mot de passe administrateur.
+3 bis. Installer Loki et Alloy (logs centralisés) avec `scripts/install-logging.sh` (voir `docs/logging.md`).
 4. Vérifier la disponibilité de la CRD `ServiceMonitor`.
 5. Créer le namespace `step-by-step` et le Secret PostgreSQL `db-credentials`.
 6. Installer Flux avec `scripts/install-flux.sh`.

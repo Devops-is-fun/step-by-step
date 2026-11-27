@@ -69,6 +69,7 @@ export GRAFANA_ADMIN_PASSWORD='<mot-de-passe>'   # jamais versionné
 ./scripts/install-monitoring.sh                  # Prometheus + Grafana
 
 ./scripts/install-ingress.sh                     # ingress-nginx
+./scripts/install-logging.sh                     # Loki + Alloy (logs centralisés)
 
 kubectl apply -f k8s/00-namespace.yaml           # Secret de la base, jamais versionné (dépôt public)
 kubectl -n step-by-step create secret generic db-credentials \
