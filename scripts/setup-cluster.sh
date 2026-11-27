@@ -3,7 +3,9 @@
 set -euo pipefail
 
 CLUSTER_NAME="step-by-step"
-K8S_IMAGE="kindest/node:v1.31.4"
+# Node image of the kind release in use (v0.33.0), pinned by digest. Kubernetes 1.37 is supported
+# by Flux v2.10 (which supports the latest Kubernetes minor versions only, not 1.31).
+K8S_IMAGE="kindest/node:v1.37.0@sha256:a1ed56cfb0e7b93589bdf97c8cd566405a265939e3620fc4f5de89adff580ae5"
 METRICS_VERSION="v0.7.2"
 # Path computed from the script location: works whatever the current directory is
 KIND_CONFIG="$(dirname "$0")/kind-config.yaml"

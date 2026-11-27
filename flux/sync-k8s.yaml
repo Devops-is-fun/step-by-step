@@ -1,0 +1,19 @@
+# Flux applies everything in k8s/ (GitOps: git is the single source of truth).
+# k8s/ must therefore contain Kubernetes resources only (apiVersion + kind).
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: step-by-step
+  namespace: flux-system
+spec:
+  interval: 1m
+  sourceRef:
+    kind: GitRepository
+    name: step-by-step
+  path: ./k8s
+  # Resources removed from k8s/ are removed from the cluster too.
+  # Only objects created by Flux are concerned (not the db-credentials Secret created by hand).
+  prune: true
+  # Ready only when the deployed workloads are healthy (rolling update finished)
+  wait: true
+  timeout: 5m

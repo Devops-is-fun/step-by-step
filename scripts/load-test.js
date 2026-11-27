@@ -12,6 +12,8 @@ export const options = {
   // The test fails if more than 1 % of the requests fail: zero-downtime check during a rolling update
   thresholds: {
     http_req_failed: ['rate<0.01'],
+    // Every answer must be an HTTP 200 (not only "not an error")
+    checks: ['rate==1'],
   },
 };
 

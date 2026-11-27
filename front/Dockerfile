@@ -1,0 +1,29 @@
+# Stage 1 : Construction du frontend
+FROM node:22.22.0-alpine AS build
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+
+RUN npm ci
+
+COPY . .
+
+RUN npm run build
+
+# Stage 2 : Serveur web non-root
+FROM nginxinc/nginx-unprivileged:1.31.7-alpine
+
+# Mises à jour de sécurité des paquets Alpine (Trivy : 0 vulnérabilité HIGH/CRITICAL restante).
+# USER en numérique (Hadolint DL3066) ; on revient à l'utilisateur non-root nginx (101) juste après.
+USER 0
+RUN apk upgrade --no-cache
+USER 101
+
+COPY --from=build /app/dist /usr/share/nginx/html
+
+COPY default.conf.template /etc/nginx/templates/default.conf.template
+
+ENV API_UPSTREAM=http://app:80
+
+EXPOSE 8080

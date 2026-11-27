@@ -11,6 +11,14 @@ K6_IMAGE="grafana/k6:1.8.2"
 DURATION="${1:-3m}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# Never send load to another environment by mistake (same check as the other scripts)
+CONTEXT="$(kubectl config current-context)"
+if [[ "$CONTEXT" != "kind-step-by-step" ]]; then
+    echo "ERREUR : contexte Kubernetes inattendu : $CONTEXT"
+    echo "Contexte attendu : kind-step-by-step"
+    exit 1
+fi
+
 echo "=== Test de charge : 20 utilisateurs virtuels pendant ${DURATION} ==="
 echo "Suivi dans un autre terminal : kubectl -n step-by-step get hpa,pods -w"
 
