@@ -134,6 +134,7 @@ La CI ne touche jamais le cluster : elle écrit seulement le nouveau tag dans Gi
 ./scripts/setup-cluster.sh        # kind (Kubernetes 1.37) + metrics-server
 ./scripts/install-monitoring.sh   # Prometheus + Grafana (Helm)
 ./scripts/install-ingress.sh      # ingress-nginx
+./scripts/install-logging.sh      # Loki + Alloy (logs centralisés)
 # namespace + Secret db-credentials
 ./scripts/install-flux.sh         # Flux déploie ensuite tout k8s/
 ```
@@ -173,7 +174,13 @@ Test de charge k6 lancé **dans** le cluster (le Service répartit la charge sur
 - Le backend expose ses métriques (Micrometer, histogrammes HTTP activés pour le p95), découvertes par un ServiceMonitor.
 - **Dashboard « SRE Golden Signals »** : latence p95, trafic, erreurs 5xx, CPU, mémoire, disponibilité du scrape.
 - Mode d'emploi et aide au diagnostic : [`docs/observabilite.md`](observabilite.md).
-- **Logs centralisés :** Loki (en cours d'intégration par Morgan).
+- **Logs centralisés : Loki + Grafana Alloy** (`scripts/install-logging.sh`). Alloy collecte les logs de **tous
+  les pods** (applicatifs et techniques) avec les labels `namespace`, `pod`, `container`, `app`, et extrait le
+  **niveau de gravité** (label `level`, formats Spring Boot et PostgreSQL). Loki est déclaré comme source de données
+  Grafana par une ConfigMap appliquée par Flux. Recherche dans **Grafana → Explore** par service, par période et par
+  gravité : `{namespace="step-by-step", level="WARN"}`. Mode d'emploi : [`docs/logging.md`](logging.md).
+  *Vérifié :* un redémarrage de PostgreSQL apparaît en `level="LOG"` côté base et en `level="WARN"` côté backend (HikariPool).
+- **Tracing distribué :** hors périmètre après échange avec le formateur.
 
 ---
 
@@ -214,7 +221,7 @@ Travail en mono-repo, **une PR par tâche**, relue par un autre membre avant le 
 | Membre | Rôle principal | Contributions |
 |---|---|---|
 | **Géraldine** | CI/CD et contraintes de production | Migration Jenkins → GitHub Actions, GHCR, manifests initiaux, sécurité de la chaîne (gitleaks, Hadolint, Trivy), workflow du front + Ingress, Flux (GitOps), HPA + k6, correctif zéro-downtime (preStop), évolutions de l'API et du front (heure planifiée, étapes cochées/supprimées) |
-| **Morgan** | Plateforme et observabilité | Scripts du cluster kind (metrics-server, ingress-nginx), Prometheus + Grafana, ServiceMonitor, dashboard SRE, tests de résilience, guide d'installation, relectures détaillées |
+| **Morgan** | Plateforme et observabilité | Scripts du cluster kind (metrics-server, ingress-nginx), Prometheus + Grafana, ServiceMonitor, dashboard SRE, **logs centralisés (Loki + Alloy)**, tests de résilience, guide d'installation, relectures détaillées |
 | **Zhou** | Frontend | Application Vue, tests automatisés, Dockerfile multi-stage, nginx non-root avec proxy `/api` configurable |
 
 ---
@@ -222,8 +229,37 @@ Travail en mono-repo, **une PR par tâche**, relue par un autre membre avant le 
 ## 10. Limites et pistes d'amélioration
 
 - **Staging séparé** de la production (deux namespaces ou deux clusters suivis par Flux, avec promotion).
-- **Ansible** (bonus) pour installer k3s sur des VM et rendre l'installation idempotente.
-- **Tracing distribué** (OpenTelemetry) pour suivre une requête du front à la base.
-- **Analyse statique de sécurité** du code (CodeQL / SonarCloud) en complément de checkstyle.
+- **Ansible** (bonus, non réalisé faute de temps — voir § 10.1).
+- **Tracing distribué** (OpenTelemetry) pour suivre une requête du front à la base (hors périmètre du projet).
+- **Qualité de code** : SonarCloud (dette technique, duplications) en complément de CodeQL (sécurité) et checkstyle.
 - **Helm Chart** de l'application et **Flagger** (déploiement canary avec rollback automatique).
 - Images signées (Sigstore / cosign) et provenance SLSA.
+
+### 10.1 Ansible : ce que nous aurions mis en place
+
+Aujourd'hui, l'installation est **reproductible** grâce à des scripts Bash versionnés (cluster reconstruit de zéro
+en ~10 minutes, testé le 27/11), et le déploiement applicatif est entièrement **déclaratif** (Flux applique `k8s/`).
+Ansible apporterait l'**idempotence** de bout en bout (rejouer sans effet de bord), la gestion de plusieurs
+environnements par inventaire, et l'installation sur de **vraies VM** (seul l'OS installé).
+
+Structure prévue :
+
+```
+ansible/
+├── inventories/
+│   ├── local/hosts.yml          # localhost (cluster kind actuel)
+│   └── vms/hosts.yml            # 2 VM : 1 serveur k3s + 1 agent
+├── group_vars/all/vault.yml     # mots de passe PostgreSQL et Grafana, chiffrés avec ansible-vault
+├── roles/
+│   ├── docker/                  # installe et configure Docker (VM)
+│   ├── k3s/                     # installe k3s : serveur sur le 1er nœud, agent sur le 2e (VM)
+│   ├── kind/                    # crée le cluster kind (local) — équivalent de setup-cluster.sh
+│   ├── platform/                # metrics-server, ingress-nginx, kube-prometheus-stack, Loki, Alloy
+│   │                            #   avec kubernetes.core.helm (versions de charts épinglées)
+│   └── gitops/                  # namespace + Secret db-credentials (kubernetes.core.k8s, depuis le vault)
+│                                #   puis Flux (manifest officiel + flux/)
+└── site.yml                     # docker → k3s|kind → platform → gitops
+```
+
+Le rôle `gitops` s'arrête à l'installation de Flux : la suite (application, HPA, Ingress, dashboard, datasource Loki)
+reste pilotée par Git, comme aujourd'hui. Ansible installe la **plateforme**, Flux déploie l'**application**.
