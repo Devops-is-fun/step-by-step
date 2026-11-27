@@ -32,8 +32,16 @@ spec:
       labels:
         app: step-by-step-front
     spec:
+      # Kubernetes refuses to start the pod if the image would run as root (nginx-unprivileged: UID 101)
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101
       containers:
         - name: front
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
           # Tag = commit SHA, written by the "Front" workflow at each merge on main (Flux deploys it).
           # "latest" only until the first run of that workflow.
           image: ghcr.io/devops-is-fun/step-by-step-front:latest
