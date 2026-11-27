@@ -83,6 +83,7 @@ commit → PR → CI (contrôles) → merge → CI sur main → image → Trivy 
 | Étape | Backend (`ci.yml`) | Frontend (`front.yml`) |
 |---|---|---|
 | Secrets dans tout l'historique git | gitleaks | — (même dépôt) |
+| Analyse statique de sécurité | CodeQL (`codeql.yml`, Java) | CodeQL (JavaScript / Vue) |
 | Lint | checkstyle | oxlint + eslint **sans `--fix`** (`lint:ci`) |
 | Tests | unitaires + intégration sur un PostgreSQL de service, couverture ≥ 60 % | Vitest + Testing Library |
 | Lint du Dockerfile | Hadolint | Hadolint |
@@ -190,6 +191,7 @@ Test de charge k6 lancé **dans** le cluster (le Service répartit la charge sur
 |---|---|---|
 | **gitleaks** | Le code (secrets) | Tout l'historique (`fetch-depth: 0`), `--redact` (logs publics), 15 fausses alertes vérifiées puis ignorées **par empreinte** |
 | **Hadolint** | Les Dockerfiles | A imposé un **UID numérique** (DL3066), nécessaire à `runAsNonRoot` |
+| **CodeQL** | Le code source (failles de sécurité) | Analyse statique Java + JavaScript sur chaque PR, sur `main` et chaque semaine ; résultats dans l'onglet *Security* |
 | **Trivy** | Le contenu des images | A trouvé des CVE HIGH dans les images de base → images de base mises à jour (+ `apk upgrade` pour nginx) ; `--ignore-unfixed` assumé et documenté |
 | Images non-root | L'exécution | Backend UID 10001, front UID 101, `allowPrivilegeEscalation: false` |
 | Versions épinglées | La reproductibilité | Aucune image `latest` dans les manifests ni dans la CI |
@@ -220,7 +222,7 @@ Travail en mono-repo, **une PR par tâche**, relue par un autre membre avant le 
 
 | Membre | Rôle principal | Contributions |
 |---|---|---|
-| **Géraldine** | CI/CD et contraintes de production | Migration Jenkins → GitHub Actions, GHCR, manifests initiaux, sécurité de la chaîne (gitleaks, Hadolint, Trivy), workflow du front + Ingress, Flux (GitOps), HPA + k6, correctif zéro-downtime (preStop), évolutions de l'API et du front (heure planifiée, étapes cochées/supprimées) |
+| **Géraldine** | CI/CD et contraintes de production | Migration Jenkins → GitHub Actions, GHCR, manifests initiaux, sécurité de la chaîne (gitleaks, Hadolint, Trivy, CodeQL), workflow du front + Ingress, Flux (GitOps), HPA + k6, correctif zéro-downtime (preStop), évolutions de l'API et du front (heure planifiée, étapes cochées/supprimées), documentation (dossier, README, démo, observabilité) |
 | **Morgan** | Plateforme et observabilité | Scripts du cluster kind (metrics-server, ingress-nginx), Prometheus + Grafana, ServiceMonitor, dashboard SRE, **logs centralisés (Loki + Alloy)**, tests de résilience, guide d'installation, relectures détaillées |
 | **Zhou** | Frontend | Application Vue, tests automatisés, Dockerfile multi-stage, nginx non-root avec proxy `/api` configurable |
 

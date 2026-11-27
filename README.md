@@ -114,6 +114,7 @@ avec `kubectl` est annulée par Flux. Retour arrière : `git revert` du commit `
 |---|---|
 | Dashboard Grafana | `kubectl -n monitoring port-forward svc/monitoring-grafana 3000:80` → <http://localhost:3000> (voir [docs/observabilite.md](docs/observabilite.md)) |
 | Auto-scaling | terminal 1 : `kubectl -n step-by-step get hpa,pods -w` — terminal 2 : `./scripts/load-test.sh 3m` |
+| Logs centralisés | Grafana → *Explore* → source **Loki** : `{namespace="step-by-step", level="WARN"}` (voir [docs/logging.md](docs/logging.md)) |
 | Zéro-downtime + self-healing | `./scripts/test-resilience.sh` (120 requêtes pendant un rolling restart, 0 échec attendu) |
 | Déploiement continu | merger une PR, puis `kubectl -n flux-system get kustomizations -w` et `kubectl -n step-by-step get pods -w` |
 
@@ -124,7 +125,7 @@ avec `kubectl` est annulée par Flux. Retour arrière : `git revert` du commit `
 cd front && npm ci && npm run lint:ci && npm test && npm run dev
 ```
 
-Les conventions de travail (branches, Conventional Commits, PR relues) sont décrites dans [CONTRIBUTING.md](CONTRIBUTING.md).
+Les conventions de travail (branches `type/sujet`, Conventional Commits, PR relues, règles GitOps) sont décrites dans [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## 7. Documentation
 
@@ -133,6 +134,8 @@ Les conventions de travail (branches, Conventional Commits, PR relues) sont déc
 | [docs/dossier-projet.md](docs/dossier-projet.md) | Dossier de projet |
 | [docs/prerequis-cluster.md](docs/prerequis-cluster.md) | Installation détaillée du cluster local |
 | [docs/observabilite.md](docs/observabilite.md) | Utiliser et lire le dashboard Grafana |
+| [docs/logging.md](docs/logging.md) | Logs centralisés (Loki + Alloy) : installation et recherche par service, date, gravité |
+| [docs/demo-soutenance.md](docs/demo-soutenance.md) | Déroulé de la démonstration |
 | [docs/tests-resilience.md](docs/tests-resilience.md) | Tests de résilience et de rolling update |
 | [docs/architecture/api.md](docs/architecture/api.md) | API REST |
 | [docs/architecture/business-rules.md](docs/architecture/business-rules.md) | Règles métier |

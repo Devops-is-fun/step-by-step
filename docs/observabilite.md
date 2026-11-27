@@ -63,3 +63,8 @@ Ce qu'on observe :
 | Erreurs 5xx > 0 % | Regarder les logs du backend (`kubectl -n step-by-step logs deploy/step-by-step`) et l'état de PostgreSQL |
 | Disponibilité du scrape = 0 / panneaux vides | Prometheus ne lit plus l'app : pods backend arrêtés, ou ServiceMonitor/label `monitoring: enabled` modifiés |
 | Trafic à 0 alors que l'app est utilisée | Les requêtes n'arrivent pas au backend : vérifier l'Ingress et le Service `app` |
+
+## 5. Et les logs ?
+
+Les métriques disent **que** quelque chose ne va pas ; les logs disent **pourquoi**. Dans Grafana → *Explore*,
+source **Loki** : `{namespace="step-by-step", level="WARN"}` — voir [logging.md](logging.md).
