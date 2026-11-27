@@ -44,7 +44,7 @@ spec:
               drop: ["ALL"]
           # Tag = commit SHA, written by the "Front" workflow at each merge on main (Flux deploys it).
           # "latest" only until the first run of that workflow.
-          image: ghcr.io/devops-is-fun/step-by-step-front:08a969bd8070bed42ef4a2116edbfbf9b48f31bb
+          image: ghcr.io/devops-is-fun/step-by-step-front:b7693f2482dda049d6cb8c3622ff2839f25ec20f
           ports:
             - containerPort: 8080
           env:
