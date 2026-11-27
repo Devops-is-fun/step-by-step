@@ -1,0 +1,88 @@
+apiVersion: v1
+data:
+  sre-golden-signals.json: "{\r\n  \"uid\": \"step-by-step-sre\",\r\n  \"title\":
+    \"Step by Step - SRE Golden Signals\",\r\n  \"tags\": [\r\n    \"step-by-step\",\r\n
+    \   \"sre\",\r\n    \"golden-signals\"\r\n  ],\r\n  \"timezone\": \"browser\",\r\n
+    \ \"schemaVersion\": 39,\r\n  \"version\": 1,\r\n  \"refresh\": \"15s\",\r\n  \"time\":
+    {\r\n    \"from\": \"now-1h\",\r\n    \"to\": \"now\"\r\n  },\r\n  \"editable\":
+    false,\r\n  \"panels\": [\r\n    {\r\n      \"id\": 1,\r\n      \"title\": \"Latence
+    p95\",\r\n      \"type\": \"timeseries\",\r\n      \"datasource\": {\r\n        \"type\":
+    \"prometheus\",\r\n        \"uid\": \"prometheus\"\r\n      },\r\n      \"gridPos\":
+    {\r\n        \"h\": 9,\r\n        \"w\": 12,\r\n        \"x\": 0,\r\n        \"y\":
+    0\r\n      },\r\n      \"fieldConfig\": {\r\n        \"defaults\": {\r\n          \"unit\":
+    \"s\"\r\n        },\r\n        \"overrides\": []\r\n      },\r\n      \"options\":
+    {\r\n        \"legend\": {\r\n          \"displayMode\": \"list\",\r\n          \"placement\":
+    \"bottom\"\r\n        },\r\n        \"tooltip\": {\r\n          \"mode\": \"single\"\r\n
+    \       }\r\n      },\r\n      \"targets\": [\r\n        {\r\n          \"refId\":
+    \"A\",\r\n          \"expr\": \"histogram_quantile(0.95, sum by (le) (rate(http_server_requests_seconds_bucket{namespace=\\\"step-by-step\\\",service=\\\"app\\\"}[$__rate_interval])))\",\r\n
+    \         \"datasource\": {\r\n            \"type\": \"prometheus\",\r\n            \"uid\":
+    \"prometheus\"\r\n          }\r\n        }\r\n      ]\r\n    },\r\n    {\r\n      \"id\":
+    2,\r\n      \"title\": \"Trafic HTTP\",\r\n      \"type\": \"timeseries\",\r\n
+    \     \"datasource\": {\r\n        \"type\": \"prometheus\",\r\n        \"uid\":
+    \"prometheus\"\r\n      },\r\n      \"gridPos\": {\r\n        \"h\": 9,\r\n        \"w\":
+    12,\r\n        \"x\": 12,\r\n        \"y\": 0\r\n      },\r\n      \"fieldConfig\":
+    {\r\n        \"defaults\": {\r\n          \"unit\": \"reqps\"\r\n        },\r\n
+    \       \"overrides\": []\r\n      },\r\n      \"options\": {\r\n        \"legend\":
+    {\r\n          \"displayMode\": \"list\",\r\n          \"placement\": \"bottom\"\r\n
+    \       },\r\n        \"tooltip\": {\r\n          \"mode\": \"single\"\r\n        }\r\n
+    \     },\r\n      \"targets\": [\r\n        {\r\n          \"refId\": \"A\",\r\n
+    \         \"expr\": \"sum(rate(http_server_requests_seconds_count{namespace=\\\"step-by-step\\\",service=\\\"app\\\"}[$__rate_interval]))\",\r\n
+    \         \"datasource\": {\r\n            \"type\": \"prometheus\",\r\n            \"uid\":
+    \"prometheus\"\r\n          }\r\n        }\r\n      ]\r\n    },\r\n    {\r\n      \"id\":
+    3,\r\n      \"title\": \"Erreurs HTTP 5xx (%)\",\r\n      \"type\": \"timeseries\",\r\n
+    \     \"datasource\": {\r\n        \"type\": \"prometheus\",\r\n        \"uid\":
+    \"prometheus\"\r\n      },\r\n      \"gridPos\": {\r\n        \"h\": 9,\r\n        \"w\":
+    12,\r\n        \"x\": 0,\r\n        \"y\": 9\r\n      },\r\n      \"fieldConfig\":
+    {\r\n        \"defaults\": {\r\n          \"unit\": \"percent\"\r\n        },\r\n
+    \       \"overrides\": []\r\n      },\r\n      \"options\": {\r\n        \"legend\":
+    {\r\n          \"displayMode\": \"list\",\r\n          \"placement\": \"bottom\"\r\n
+    \       },\r\n        \"tooltip\": {\r\n          \"mode\": \"single\"\r\n        }\r\n
+    \     },\r\n      \"targets\": [\r\n        {\r\n          \"refId\": \"A\",\r\n
+    \         \"expr\": \"100 * ( sum(rate(http_server_requests_seconds_count{ namespace=\\\"step-by-step\\\",
+    service=\\\"app\\\", status=~\\\"5..\\\" }[$__rate_interval])) or vector(0) )
+    / clamp_min( sum(rate(http_server_requests_seconds_count{ namespace=\\\"step-by-step\\\",
+    service=\\\"app\\\" }[$__rate_interval])), 1e-9 )\",\r\n          \"datasource\":
+    {\r\n            \"type\": \"prometheus\",\r\n            \"uid\": \"prometheus\"\r\n
+    \         }\r\n        }\r\n      ]\r\n    },\r\n    {\r\n      \"id\": 4,\r\n
+    \     \"title\": \"CPU backend\",\r\n      \"type\": \"timeseries\",\r\n      \"datasource\":
+    {\r\n        \"type\": \"prometheus\",\r\n        \"uid\": \"prometheus\"\r\n
+    \     },\r\n      \"gridPos\": {\r\n        \"h\": 9,\r\n        \"w\": 12,\r\n
+    \       \"x\": 12,\r\n        \"y\": 9\r\n      },\r\n      \"fieldConfig\": {\r\n
+    \       \"defaults\": {\r\n          \"unit\": \"cores\"\r\n        },\r\n        \"overrides\":
+    []\r\n      },\r\n      \"options\": {\r\n        \"legend\": {\r\n          \"displayMode\":
+    \"list\",\r\n          \"placement\": \"bottom\"\r\n        },\r\n        \"tooltip\":
+    {\r\n          \"mode\": \"single\"\r\n        }\r\n      },\r\n      \"targets\":
+    [\r\n        {\r\n          \"refId\": \"A\",\r\n          \"expr\": \"sum(rate(container_cpu_usage_seconds_total{namespace=\\\"step-by-step\\\",container=\\\"app\\\",pod=~\\\"step-by-step-.*\\\"}[$__rate_interval]))\",\r\n
+    \         \"datasource\": {\r\n            \"type\": \"prometheus\",\r\n            \"uid\":
+    \"prometheus\"\r\n          }\r\n        }\r\n      ]\r\n    },\r\n    {\r\n      \"id\":
+    5,\r\n      \"title\": \"Mémoire backend\",\r\n      \"type\": \"timeseries\",\r\n
+    \     \"datasource\": {\r\n        \"type\": \"prometheus\",\r\n        \"uid\":
+    \"prometheus\"\r\n      },\r\n      \"gridPos\": {\r\n        \"h\": 9,\r\n        \"w\":
+    12,\r\n        \"x\": 0,\r\n        \"y\": 18\r\n      },\r\n      \"fieldConfig\":
+    {\r\n        \"defaults\": {\r\n          \"unit\": \"bytes\"\r\n        },\r\n
+    \       \"overrides\": []\r\n      },\r\n      \"options\": {\r\n        \"legend\":
+    {\r\n          \"displayMode\": \"list\",\r\n          \"placement\": \"bottom\"\r\n
+    \       },\r\n        \"tooltip\": {\r\n          \"mode\": \"single\"\r\n        }\r\n
+    \     },\r\n      \"targets\": [\r\n        {\r\n          \"refId\": \"A\",\r\n
+    \         \"expr\": \"sum(container_memory_working_set_bytes{namespace=\\\"step-by-step\\\",container=\\\"app\\\",pod=~\\\"step-by-step-.*\\\"})\",\r\n
+    \         \"datasource\": {\r\n            \"type\": \"prometheus\",\r\n            \"uid\":
+    \"prometheus\"\r\n          }\r\n        }\r\n      ]\r\n    },\r\n    {\r\n      \"id\":
+    6,\r\n      \"title\": \"Disponibilité du scrape\",\r\n      \"type\": \"timeseries\",\r\n
+    \     \"datasource\": {\r\n        \"type\": \"prometheus\",\r\n        \"uid\":
+    \"prometheus\"\r\n      },\r\n      \"gridPos\": {\r\n        \"h\": 9,\r\n        \"w\":
+    12,\r\n        \"x\": 12,\r\n        \"y\": 18\r\n      },\r\n      \"fieldConfig\":
+    {\r\n        \"defaults\": {\r\n          \"unit\": \"short\"\r\n        },\r\n
+    \       \"overrides\": []\r\n      },\r\n      \"options\": {\r\n        \"legend\":
+    {\r\n          \"displayMode\": \"list\",\r\n          \"placement\": \"bottom\"\r\n
+    \       },\r\n        \"tooltip\": {\r\n          \"mode\": \"single\"\r\n        }\r\n
+    \     },\r\n      \"targets\": [\r\n        {\r\n          \"refId\": \"A\",\r\n
+    \         \"expr\": \"max(up{namespace=\\\"step-by-step\\\",service=\\\"app\\\"})\",\r\n
+    \         \"datasource\": {\r\n            \"type\": \"prometheus\",\r\n            \"uid\":
+    \"prometheus\"\r\n          }\r\n        }\r\n      ]\r\n    }\r\n  ]\r\n}\r\n"
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  labels:
+    grafana_dashboard: "1"
+  name: step-by-step-sre-dashboard
+  namespace: monitoring
