@@ -49,7 +49,7 @@ spec:
               sleep:
                 seconds: 10
           # Tag = commit SHA pushed by the CI (never "latest"): change it to deploy a new version
-          image: ghcr.io/devops-is-fun/step-by-step:914ad6e6af552235604fde62960e90ffc104eddc
+          image: ghcr.io/devops-is-fun/step-by-step:49f321ec88c1ed9df5c0b2e3da0ace6e5dd034cd
           ports:
             - containerPort: 8080
           env:
